@@ -2,6 +2,15 @@ import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
 import { spaces, panes, run, openOverlay, theme, window, shared, layout, settings } from "herdr";
 
+// The per-space panel choice, as this mod last wrote it — anything else is ignored,
+// because a value this mod cannot read must not take the whole tab bar down.
+function panels() {
+  try {
+    const value = JSON.parse(localStorage.getItem("panels") ?? "{}");
+    return value && typeof value === "object" && !Array.isArray(value) ? value : {};
+  } catch { return {}; }
+}
+
 function find(node, id) {
   if (node?.id === id) return node;
   for (const child of node?.children ?? []) {
@@ -14,7 +23,7 @@ function find(node, id) {
 export default class Tabs extends View {
   init() {
     this.pressed = null;
-    this.panels = JSON.parse(localStorage.getItem("panels") ?? "{}");
+    this.panels = panels();
   }
 
   // The side panel is remembered per space: switching shows that space's choice
@@ -25,7 +34,7 @@ export default class Tabs extends View {
     if (space.id !== this.space) {
       const first = this.space === undefined;
       this.space = space.id; this.pending = null;
-      if (!(first && !(space.id in this.panels))) {
+      if (!(first && !Object.hasOwn(this.panels, space.id))) {
         const stored = this.panels[space.id] ?? null, want = enabled.includes(stored) ? stored : null;
         if (want !== now) {
           this.pending = { want, until: Date.now() + 1000 };
@@ -42,7 +51,7 @@ export default class Tabs extends View {
     }
     if (this.panels[space.id] === now) return;
     this.panels[space.id] = now;
-    localStorage.setItem("panels", JSON.stringify(this.panels));
+    try { localStorage.setItem("panels", JSON.stringify(this.panels)); } catch { /* memory only */ }
   }
 
   render() {
@@ -77,7 +86,9 @@ export default class Tabs extends View {
       ? Math.max(10, (root.traffic_lights[0] + 64) / settings().zoom - (sidebar?.hidden ? 0 : sidebar?.size?.px ?? 0))
       : 10;
     const panel = find(root, "panel"), body = find(root, "panel-body");
-    const enabled = [...new Set([...(shared("workspace.panels") ?? ["files", "changes"]), "gh-board"])];
+    const raw = shared("workspace.panels");
+    const bases = Array.isArray(raw) ? raw.filter((name) => typeof name === "string") : ["files", "changes"];
+    const enabled = [...new Set([...bases, "gh-board"])];
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;

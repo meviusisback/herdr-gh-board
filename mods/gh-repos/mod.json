@@ -1,1 +1,5 @@
-{ "place": "none", "title": "Repos" }
+{
+  "place": "none",
+  "title": "Repos",
+  "version": "1.0.0"
+}

@@ -32,11 +32,30 @@ function day(iso) {
 }
 
 // owner/name from an https://, ssh:// or scp-like github remote.
-const slug = (name) => String(name ?? "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+// Must match gh-new's slug(): the panel finds a worktree by the name the dialog gave it.
+const slug = (name) => String(name ?? "")
+  .replace(/[^A-Za-z0-9._-]+/g, "-")
+  .replace(/\.{2,}/g, "-")
+  .replace(/^[.\-]+|[.\-]+$/g, "");
 
 function nwo(url) {
   const match = /github\.com[:/]+([^/]+)\/([^/]+?)(?:\.git)?\/*$/.exec(url || "");
   return match ? `${match[1]}/${match[2]}` : null;
+}
+
+// Display text: control characters and bidi overrides would let a title or a label
+// reorder what the panel shows, so they never reach the screen.
+const text = (value) => String(value ?? "").replace(/[\u0000-\u001f\u007f\u200b-\u200f\u202a-\u202e\u2066-\u2069]/g, "");
+
+// An issue body may be written by anyone: no images (they would be fetched), no raw
+// HTML, and a bound on how much markdown is parsed per render.
+function cleanBody(value, limit = 4000) {
+  return text(value)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/<img\b[^>]*>/gi, "")
+    .replace(/<\/?(script|style|iframe|object|embed|svg|link|meta)\b[^>]*>/gi, "")
+    .slice(0, limit)
+    .trim();
 }
 
 function stored(key) {
@@ -51,14 +70,23 @@ async function scanRepos(root) {
   let entries;
   try { entries = await fs.readdir(root, { withFileTypes: true }); } catch { return null; }
   const dirs = entries.filter((e) => e.isDirectory()).map((e) => e.name).sort();
-  const found = await Promise.all(dirs.map(async (name) => {
-    const dir = `${root}/${name}`;
-    try {
-      const r = await exec("git", ["-C", dir, "config", "--get", "remote.origin.url"]);
-      const repo = r.code === 0 ? nwo(r.stdout.trim()) : null;
-      return repo ? { dir, repo } : null;
-    } catch { return null; }
-  }));
+  const found = new Array(dirs.length).fill(null);
+  let next = 0;
+  // Six at a time: a folder with thousands of subdirectories must not spawn them all.
+  const worker = async () => {
+    for (;;) {
+      const index = next++;
+      if (index >= dirs.length) return;
+      const dir = `${root}/${dirs[index]}`;
+      try {
+        if (!(await fs.exists(`${dir}/.git`))) continue; // not a checkout (a worktree has a .git file)
+        const r = await exec("git", ["-C", dir, "config", "--get", "remote.origin.url"]);
+        const repo = r.code === 0 ? nwo(r.stdout.trim()) : null;
+        if (repo) found[index] = { dir, repo };
+      } catch { /* not a checkout */ }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(6, dirs.length) }, worker));
   const seen = new Set();
   return found.filter((entry) => entry && !seen.has(entry.repo) && (seen.add(entry.repo), true));
 }
@@ -95,13 +123,13 @@ function toItem(repo, kind, node) {
   return {
     repo, kind,
     key: `${repo}#${node.number}${kind === "pr" ? "p" : ""}`,
-    number: node.number,
-    title: node.title,
+    number: Number(node.number),
+    title: text(node.title),
     url: node.url,
     updatedAt: node.updatedAt || "",
-    author: node.author?.login || "ghost",
+    author: text(node.author?.login || "ghost"),
     comments: node.comments?.totalCount ?? 0,
-    labels: (node.labels?.nodes ?? []).map((label) => label.name),
+    labels: (node.labels?.nodes ?? []).map((label) => text(label.name)),
     draft: Boolean(node.isDraft),
     review: node.reviewDecision || null,
   };
@@ -109,10 +137,12 @@ function toItem(repo, kind, node) {
 
 // Mirrors gh-new's naming: "#53 Worktree rows, per-tree tabs" -> 53-worktree-rows-per-tree-tabs
 function issueName(number, label) {
-  if (number == null) return "";
+  const n = Number(number);
+  if (!Number.isSafeInteger(n) || n <= 0) return "";
+  number = n;
   const title = String(label ?? "").replace(new RegExp(`^#?${number}[\\s:.-]*`), "");
-  const text = slug(title ? `${number}-${title}` : String(number));
-  return text.length > 48 ? text.slice(0, 48).replace(/-+$/, "") : text;
+  const name = slug(title ? `${number}-${title}` : String(number));
+  return name.length > 48 ? name.slice(0, 48).replace(/-+$/, "") : name;
 }
 
 // Rough chip widths (the ui font is monospace): enough to know whether the four
@@ -121,8 +151,12 @@ const textWidth = (text, size) => String(text).length * size * 0.56;
 const chipWidth = (label, count, extra = 0) =>
   18 + textWidth(label, 11) + (count == null ? 0 : 6 + textWidth(count, 10)) + extra;
 
-function openUrl(url) {
-  exec("xdg-open", [url]).then((r) => (r.code === 0 ? null : exec("open", [url]))).catch(() => {});
+const BUILT_IN_TAGS = new Set(["draft", "approved", "changes requested"]);
+
+// Only GitHub over https, and only through the host's guarded opener.
+function openGitHub(url, cx) {
+  if (!/^https:\/\/([a-z0-9-]+\.)?github\.com\//i.test(String(url ?? ""))) return;
+  cx.open_url(url);
 }
 
 export default class GhBoard extends View {
@@ -156,7 +190,7 @@ export default class GhBoard extends View {
   }
 
   refresh(cx, rescan = false) {
-    if (this.loading) return;
+    if (this.loading) { this.pending = Boolean(this.pending) || rescan; return; }
     this.loading = true;
     cx.spawn(async (cx) => {
       try {
@@ -167,10 +201,12 @@ export default class GhBoard extends View {
           // The repo picker and the from-scratch dialog read the list from here.
           if (JSON.stringify(shared("gh-board.repos") ?? null) !== JSON.stringify(repos)) setShared("gh-board.repos", repos);
           const pick = shared("gh-board.selected");
-          if (Array.isArray(pick)) {
+          if (Array.isArray(pick) && pick.length) {
             const names = repos.map((entry) => entry.repo);
             const kept = pick.filter((repo) => names.includes(repo));
-            if (kept.length !== pick.length) setShared("gh-board.selected", kept.length === names.length ? null : kept);
+            // Everything picked vanished (another folder): show everything rather than
+            // an empty panel. An explicit "None" ([]) is left alone.
+            if (kept.length !== pick.length) setShared("gh-board.selected", kept.length === 0 || kept.length === names.length ? null : kept);
           }
         }
         const every = this.repos.map((entry) => entry.repo);
@@ -212,6 +248,11 @@ export default class GhBoard extends View {
       } finally {
         this.loading = false;
         cx.notify();
+        if (this.pending !== undefined) {
+          const rescanNow = Boolean(this.pending);
+          this.pending = undefined;
+          this.refresh(cx, rescanNow);
+        }
       }
     });
   }
@@ -244,7 +285,7 @@ export default class GhBoard extends View {
     const entry = (this.repos ?? []).find((repo) => repo.repo === item.repo);
     const folder = entry?.dir ?? `${this.root()}/${item.repo.split("/")[1]}`;
     const label = `#${item.number} ${item.title}`;
-    const repoName = slug(folder.split("/").filter(Boolean).pop() || item.repo.split("/")[1]);
+    const repoName = slug(folder.split("/").filter(Boolean).pop() || item.repo.split("/")[1]) || "repo";
     return { folder, label, tab: label.slice(0, 64), path: `${home()}/.herdr/worktrees/${repoName}/${issueName(item.number, label)}` };
   }
 
@@ -349,7 +390,12 @@ export default class GhBoard extends View {
     if (item.draft) out.push({ text: "draft", tone: t.dim });
     if (item.review === "APPROVED") out.push({ text: "approved", tone: t.ansi2 });
     if (item.review === "CHANGES_REQUESTED") out.push({ text: "changes requested", tone: t.ansi1 });
-    if (withLabels) for (const label of item.labels) out.push({ text: label, tone: t.dim });
+    if (withLabels) {
+      for (const label of item.labels) {
+        if (BUILT_IN_TAGS.has(label.toLowerCase())) continue;
+        out.push({ text: label, tone: t.dim });
+      }
+    }
     return out.slice(0, limit).map((tag) =>
       div().h(16).px(5).flex().items_center().rounded(4).bg(tag.tone + "22").text_color(tag.tone).text_size(9.5).child(tag.text));
   }
@@ -400,7 +446,7 @@ export default class GhBoard extends View {
       .child(div().id(`${at}-gh-${item.key}`).h(24).px(7).flex().items_center().rounded(6).text_size(11)
         .text_color(t.dim).cursor_pointer().hover((s) => s.bg(t.hover).text_color(t.foreground))
         .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-        .on_click((_e, cx) => { cx.stop_propagation(); openUrl(item.url); }).child("GitHub ↗"))
+        .on_click((_e, cx) => { cx.stop_propagation(); openGitHub(item.url, cx); }).child("GitHub ↗"))
 ;
 
     if (!d || d.error) {
@@ -426,7 +472,7 @@ export default class GhBoard extends View {
       if (d.milestone?.title) stats.push(`milestone ${d.milestone.title}`);
       if (d.assignees?.length) stats.push(`assigned ${d.assignees.map((a) => a.login).join(", ")}`);
     }
-    const body = (d.body ?? "").trim();
+    const body = cleanBody(d.body);
     const tags = this.tags(item, t, 6, true);
     // An estimate is enough: markdown wraps at the card's width, so count the
     // wrapped lines and give the description its own fixed box when it is long.
@@ -444,7 +490,8 @@ export default class GhBoard extends View {
           .when(!docked && boxed, (e) => e.flex_none().h(Math.min(320, Math.max(96, lines * 16 + 14))))
           .when(!docked && !boxed, (e) => e.flex_none())
           .overflow_y_scrollbar()
-          .child(TextView.markdown(`${at}-body-${item.key}`, body).text_size(11.5).text_color(t.muted))
+          .child(TextView.markdown(`${at}-body-${item.key}`, body).text_size(11.5).text_color(t.muted)
+            .on_link_click((url, cx) => openGitHub(url, cx)))
         : div().text_size(11).text_color(t.dim).child("No description."))
       .child(footer);
   }

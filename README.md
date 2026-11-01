@@ -20,7 +20,7 @@
 
 ## What you get
 
-- **One list, every repo.** Scans a folder (`~/repo` by default), reads each checkout's `origin` remote, and asks `gh` for the open issues and PRs — one batched GraphQL query per 20 repos, so a refresh is two requests and about a second.
+- **One list, every repo.** Scans a folder (`~/repo` by default), reads each checkout's `origin` remote, and asks `gh` for the open issues and PRs — one batched GraphQL query per 20 repos, plus a detail fetch for the newest few rows so their cards are ready before you hover.
 - **A real panel, not a window.** It lives in the same right-hand column as Herdr's *Files* and *Changes*, opens from an **Issues** button in the tab bar, and each space remembers whether you had it open.
 - **Details on hover, pinned on click.** Hover a row for a card with the description rendered as markdown, state, author, dates, labels, review state and diff stats. Click it and the same card docks at the bottom of the column, where it stays while you scroll.
 - **Filters that behave.** `All` / `Issues` / `PRs` are tabs; `Changes requested` is a separate filter you can switch on and take off with its ✕. They sit together when they fit, and it wraps to its own line when the panel is too narrow.
@@ -63,23 +63,60 @@ The dialog is pre-filled from the issue or PR: `#12 fix(probe): read Apple Silic
 
 Only the picked repos are queried. `Rescan` re-reads the folder, `Folder…` opens the system folder picker, and a selection that loses a repo (because you deleted the checkout) is pruned automatically.
 
+## Trust
+
+**This is code, not a skin.** A Herdr mod runs inside your session with your own privileges: it can start any program, read files in your home and use your `gh` credentials. This package is four such mods (~1200 lines of plain JavaScript), so the honest install procedure is *read them first* — `mods/*/main.js`, no build step, no dependencies, no network code beyond the `gh` calls described above.
+
+`herdr-app check` is **not** a safety gate: it loads a mod once and reports whether it is compatible with your Herdr version. It says nothing about what the code does.
+
+What the mods are allowed to do in this package, and nothing else:
+
+| | |
+|---|---|
+| Programs started | `gh`, `git` (both with an argv array, never a shell), and the agent you pick in the dialog, which Herdr starts for you |
+| Files read | the folder you point the panel at (a non-recursive listing plus each checkout's `origin` remote) |
+| Files written | under `~/.herdr/worktrees/`; git's own bookkeeping inside the source repo; and a folder that is *not* a repository yet is initialised (`git init` + one empty commit) if you explicitly create a worktree in it through `Other folder…` |
+| State kept | Herdr shared state (`gh-board.*`) and the app's own `localStorage` (the filter choice, and the per-space panel toggle in `tabs-gh`) |
+| Network | only through `gh`, with your credentials — the panel renders issue text, and **images and raw HTML are stripped from issue bodies** before rendering so a crafted issue cannot fetch anything from your machine. Links in a body are handed to Herdr, which only opens http(s), and this package only allows `github.com` |
+
+Security issues: see [SECURITY.md](SECURITY.md).
+
 ## Install
 
 Requires **Herdr 0.1.11 or newer**, and `gh` (logged in: `gh auth status`) and `git` on `PATH`.
 
+Pin the release you read. `v1.0.0` is the audited one; bump the tag deliberately.
+
 ```sh
+set -eu
 APP=~/.config/herdr-app
-git clone https://github.com/meviusisback/herdr-gh-board /tmp/herdr-gh-board
-cp /tmp/herdr-gh-board/layouts/main-gh.json "$APP/layouts/"
-cp -r /tmp/herdr-gh-board/mods/gh-board /tmp/herdr-gh-board/mods/gh-new \
-      /tmp/herdr-gh-board/mods/gh-repos /tmp/herdr-gh-board/mods/tabs-gh "$APP/mods/"
-herdr-app check "$APP/mods/gh-board"     # and gh-new, gh-repos, tabs-gh
+SRC=/tmp/herdr-gh-board
+
+# 1. read it (there is no build step: what you read is what runs)
+git clone --branch v1.0.0 --depth 1 https://github.com/meviusisback/herdr-gh-board "$SRC"
+git -C "$SRC" rev-parse HEAD        # note this commit: it is what you are installing
+
+# 2. back up what is there now
+cp -r "$APP/layouts" "$APP/layouts.bak.$(date +%s)" 2>/dev/null || true
+for m in gh-board gh-new gh-repos tabs-gh; do [ -d "$APP/mods/$m" ] && cp -r "$APP/mods/$m" "$APP/mods/$m.bak.$(date +%s)"; done
+
+# 3. install (this replaces the four mods and layouts/main-gh.json — including local edits)
+rsync -a --delete "$SRC/mods/gh-board/" "$APP/mods/gh-board/"
+rsync -a --delete "$SRC/mods/gh-new/"   "$APP/mods/gh-new/"
+rsync -a --delete "$SRC/mods/gh-repos/" "$APP/mods/gh-repos/"
+rsync -a --delete "$SRC/mods/tabs-gh/"  "$APP/mods/tabs-gh/"
+cp "$SRC/layouts/main-gh.json" "$APP/layouts/"
+
+# 4. load each mod once, then switch
+for m in gh-board gh-new gh-repos tabs-gh; do herdr-app check "$APP/mods/$m"; done
 herdr-app do layout.switch --name main-gh
 ```
 
+The mods carry a `version` in their `mod.json`, so `grep version ~/.config/herdr-app/mods/gh-*/mod.json` tells you what is installed.
+
 Then open the panel with the **Issues** button in the tab bar (or `herdr-app do layout.select --stack panel-body --child gh-board && herdr-app do layout.show --id panel`).
 
-If any of those mod names is already taken in your `~/.config/herdr-app/mods/`, rename the folders — and the `"mod"` names in `layouts/main-gh.json` and in `mods/tabs-gh/main.js` (`gh-board` in the `enabled` list and its `panelButton`) — to match.
+If any of those mod names is already taken in `~/.config/herdr-app/mods/`, rename the folders *and* every place the names appear — `grep -rn 'gh-board\|gh-new\|gh-repos\|tabs-gh' "$APP/mods" "$APP/layouts/main-gh.json"`; the list is: the four `content.mod` names in `layouts/main-gh.json`, the `enabled` entry and the `panelButton` in `mods/tabs-gh/main.js`, the `openOverlay({mod: …})` calls in `mods/gh-board/main.js` (the `New`, `Repos` and branch buttons), and the `mods/<name>/*.svg` asset paths in all four mods.
 
 ## Requirements
 
@@ -92,7 +129,7 @@ If any of those mod names is already taken in your `~/.config/herdr-app/mods/`, 
 
 ## What it talks to
 
-Only `gh` (GitHub's API, with your own credentials) and `git`, both through Herdr's `exec`. Opening a row's `GitHub` button shells out to `xdg-open` (or `open` on macOS). Nothing is written outside `~/.herdr/worktrees/` when you create a worktree, and no state leaves `shared.json`.
+`gh` (GitHub's API, with your own credentials) and `git`, both through Herdr's `exec` with an argv array. The `GitHub ↗` button and links inside a description go through Herdr's own URL opener, which only accepts http(s), and this package only passes `github.com` URLs to it. Creating a worktree writes under `~/.herdr/worktrees/` plus git's own bookkeeping inside the source repo (`<repo>/.git/worktrees/<name>/`); a folder you point `Other folder…` at that is not a repository yet is initialised there. State lives in Herdr's shared state (`gh-board.repos`, `.selected`, `.root`, `.rescan`, `.agent`) and in the app's `localStorage` (the filter choice, and `tabs-gh`'s per-space panel memory).
 
 ## What is in the box
 
@@ -108,6 +145,7 @@ The mods talk to each other through Herdr's shared state: `gh-board.repos` (the 
 
 ## Notes
 
+- **Issue text is treated as untrusted.** The description is rendered as markdown, but markdown images and raw HTML are stripped first (they would be fetched), and a description is capped at 4 kB before rendering. Links open only on a click, only through Herdr, and only to `github.com`.
 - **The panel is a clone.** Herdr's shipped layouts and mods are read-only, so this package ships a copy of `main` (as `main-gh`) and of `tabs` (as `tabs-gh`), made from Herdr 0.1.11. They work as they are, but they do not receive Herdr's future updates — re-clone with `herdr-app do layout.clone '{"name":"main","as":"main-gh-2"}'` and copy the `gh-board` block over if you want a fresh one. `ctrl-shift-l` switches back to your own layout at any time.
 - The worktree name is what the panel looks for: rename it in the dialog and the panel will not recognise that checkout again (the space is still created and selected).
 - The agent list comes from Herdr's own table plus your `programs.json`; anything with a `run` entry shows up in the dropdown.

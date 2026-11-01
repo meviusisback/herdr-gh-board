@@ -9,7 +9,12 @@ import { exec, home, theme, run, spaces, knownAgents, props, closeOverlay, share
 //     initialized as a repository when it isn't one), a branch that exists or a
 //     new one, and the agent.
 // The agent picked last is remembered in shared("gh-board.agent").
-const slug = (name) => String(name ?? "").replace(/[^A-Za-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+// One name shape for folders and refs: no separators, no dot runs (git refuses "a..b"
+// and any component beginning or ending with a dot), nothing that looks like a flag.
+const slug = (name) => String(name ?? "")
+  .replace(/[^A-Za-z0-9._-]+/g, "-")
+  .replace(/\.{2,}/g, "-")
+  .replace(/^[.\-]+|[.\-]+$/g, "");
 
 function folderName(folder) {
   return slug(String(folder ?? "").split("/").filter(Boolean).pop() || "repo");
@@ -159,13 +164,21 @@ export default class GhNew extends View {
     if (!this.folder) return this.fail("Pick a repo first.", cx);
     if (!worktree) return this.fail("Name the worktree.", cx);
     if (!branch) return this.fail("Name the branch.", cx);
+    if (branch.length > 100) return this.fail("That branch name is too long.", cx);
+    const folder = String(this.folder).replace(/\/+$/, "");
+    const worktrees = `${home()}/.herdr/worktrees`;
     const path = this.path();
+    if (!folder || folder === "/" || folder === home()) return this.fail("Pick a folder that is not your home directory.", cx);
+    if (!path.startsWith(`${worktrees}/`)) return this.fail("Refusing to write outside ~/.herdr/worktrees.", cx);
     const agent = this.agentRun();
     const tab = this.tabName || branch;
     this.busy = true;
     this.error = "";
     cx.spawn(async (cx) => {
       try {
+        // git would read a leading "-" as a flag: ask git itself whether this is a name.
+        const shape = await exec("git", ["check-ref-format", "--branch", branch]);
+        if (shape.code !== 0) throw new Error(`"${branch}" is not a valid branch name.`);
         const existing = spaces().find((space) => space.folder === path);
         if (existing) {
           run("space.select", { id: existing.id });
@@ -175,18 +188,25 @@ export default class GhNew extends View {
           closeOverlay(props().overlay);
           return;
         }
-        const found = await exec("git", ["-C", this.folder, "rev-parse", "--show-toplevel"]);
+        const found = await exec("git", ["-C", folder, "rev-parse", "--show-toplevel"]);
         let root = found.code === 0 ? found.stdout.trim() : null;
         if (!root) {
-          // A folder that is not a repository yet: make one, so "from zero" works.
-          const init = await exec("git", ["init", "-b", "main", this.folder]);
+          // Only "there is no repository here" means initialise one: any other failure
+          // (a checkout owned by another user, say) must be shown, not papered over.
+          const why = String(found.stderr ?? "").toLowerCase();
+          if (!/not a git repository|not a repository/.test(why)) {
+            throw new Error((found.stderr || "git rev-parse failed").trim().split("\n").pop());
+          }
+          const init = await exec("git", ["init", "-b", "main", "--", folder]);
           if (init.code !== 0) throw new Error((init.stderr || "git init failed").trim().split("\n").pop());
-          const commit = await exec("git", ["-C", this.folder, "commit", "--allow-empty", "-m", "Start"]);
+          const commit = await exec("git", ["-C", folder, "commit", "--allow-empty", "-m", "Start"]);
           if (commit.code !== 0) throw new Error((commit.stderr || "git commit failed").trim().split("\n").pop());
           root = this.folder;
         }
         const known = await exec("git", ["-C", root, "show-ref", "--verify", "--quiet", `refs/heads/${branch}`]);
-        const add = known.code === 0 ? ["worktree", "add", path, branch] : ["worktree", "add", "-b", branch, path, "HEAD"];
+        const add = known.code === 0
+          ? ["worktree", "add", "--", path, branch]
+          : ["worktree", "add", "-b", branch, "--", path, "HEAD"];
         const made = await exec("git", ["-C", root, ...add]);
         if (made.code !== 0) throw new Error((made.stderr || made.stdout || "git worktree add failed").trim().split("\n").pop());
         // Named after the repo: the checkout is what varies, the project is not.

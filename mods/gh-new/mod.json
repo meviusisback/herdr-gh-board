@@ -1,1 +1,5 @@
-{ "place": "none", "title": "New worktree" }
+{
+  "place": "none",
+  "title": "New worktree",
+  "version": "1.0.0"
+}
