@@ -10,6 +10,7 @@
 [![needs](https://img.shields.io/badge/needs-gh%20%7C%20git-2ea043?style=flat-square)](#requirements)
 [![platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS-8b949e?style=flat-square)](#requirements)
 [![network](https://img.shields.io/badge/network-gh%20API%20only-d29922?style=flat-square)](#what-it-talks-to)
+[![license](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](LICENSE)
 
 <img src="preview.png" alt="Herdr with the Issues & PRs panel open on the right" width="100%">
 
@@ -111,6 +112,10 @@ The mods talk to each other through Herdr's shared state: `gh-board.repos` (the 
 - The worktree name is what the panel looks for: rename it in the dialog and the panel will not recognise that checkout again (the space is still created and selected).
 - The agent list comes from Herdr's own table plus your `programs.json`; anything with a `run` entry shows up in the dropdown.
 - `RECIPE.md` describes how the whole thing is built, if you want to change it rather than patch it.
+
+## License
+
+MIT — see [LICENSE](LICENSE). Do what you want with it.
 
 ---
 
