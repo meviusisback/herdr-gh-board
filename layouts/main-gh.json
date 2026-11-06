@@ -40,7 +40,7 @@
        "id": "agents",
        "type": "block",
        "content": {
-        "mod": "agents"
+        "mod": "agents-follow"
        },
        "size": {
         "weight": 1
@@ -147,17 +147,23 @@
            "content": {
             "mod": "gh-board"
            }
+          },
+          {
+           "id": "gh-trees",
+           "type": "block",
+           "content": {
+            "mod": "gh-trees"
+           }
           }
          ],
-         "active": "files"
+         "active": "gh-board"
         }
        ],
        "size": {
         "px": 368
        },
        "min": 280,
-       "max": 900,
-       "hidden": true
+       "max": 900
       }
      ],
      "padding": 8,

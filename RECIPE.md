@@ -1,16 +1,16 @@
 # Issues & PRs
 
-A panel for Herdr that lists the open issues and pull requests of every GitHub repo checked out in one folder, shows one's full details on hover or pinned at the bottom of the column, and turns one into a git worktree with a coding agent already running in it.
+A panel for Herdr that lists the open issues and pull requests of every GitHub repo checked out in one folder, shows one's full details on hover or pinned at the bottom of the column, turns one into a git worktree with a coding agent already running in it, follows agent selection both ways, and shows every worktree grouped by repo in a second panel.
 
 ![Issues & PRs](preview.png)
 
 ## What you see
 
-The package is a layout (`main-gh`) and three mods, so what you see is Herdr's own window with three changes.
+The package is a layout (`main-gh`) and seven mods, so what you see is Herdr's own window with five changes.
 
-**The tab bar** gains a third panel button, `Issues` (a circle-with-dot icon, `mods/gh-board/inbox.svg`), after `Files` and `Changes`, 26 px tall, using the same active/inactive look as the other two.
+**The tab bar** gains two panel buttons after `Files` and `Changes`: `Issues` (a circle-with-dot icon, `mods/gh-board/inbox.svg`) and `Trees` (a branch icon), 26 px tall, same active/inactive look as the other two. The `+` menu pins favourite agents to the top (Hermes, Oh My Pi, Pi — edit `PINNED` in `mods/new-menu-pinned/main.js`).
 
-**The right column** is Herdr's `panel` node, hidden until a button opens it: 368 px by default (min 280, max 900). Inside it the `panel-body` stack gained a third child, `gh-board`, next to `files` and `changes`. The panel draws its own card on the theme: `rounded(10)`, 1 px `border`, `background` fill, 12.5 px text.
+**The right column** is Herdr's `panel` node, open by default: 368 px (min 280, max 900). Inside it the `panel-body` stack gained two children, `gh-board` and `gh-trees`, next to `files` and `changes`. Each panel draws its own card on the theme: `rounded(10)`, 1 px `border`, `background` fill, 12.5 px text. The column stays open in every space; each space remembers which panel it had (or that it was closed), and a space never touched opens on Issues.
 
 Top to bottom:
 
@@ -20,10 +20,9 @@ Top to bottom:
 4. **The docked card**, 300 px tall, `background` fill with a top border, only while a row is selected: header (`PR`/`Issue` pill, `#number`, repo, state, `✕`), the title at 13 px semibold, a `dim` meta line (`by author · opened 2026-11-01 · updated 5h`), the tags, a stats line in the item's tone (`+3334 −300 · 24 files · fixes → main · changes requested`), the description as markdown (`TextView.markdown`, 11.5 px, `muted`, filling and scrolling in the leftover space), and a footer with `Open worktree` (solid when that worktree exists), `New worktree` (solid when it does not) and `GitHub ↗`.
 5. **Status line, 24 px**: `5 of 5 shown` (or the error, in `ansi1`), `N failed` in `ansi3` when some repos could not be asked, and `updated 4m ago`.
 
-**Two dialogs** open from the panel, both `frame: "none"` so they draw their own card on `popover` with `rounded(12)` and `shadow_lg`:
+**The Trees panel** lists every checkout under `~/repo` grouped by repo: a dim 11 px repo header, then one 28 px row per tree — branch icon, folder name (or `main` for the main checkout, tagged `checkout` on the right), branch name in `dim` when it differs. The active space's folder is `selected`. A header (`Worktrees`, `Refresh`) and a footer (`N worktrees in M repos`). 15 s refresh.
 
-- `Worktree + agent`, 560 px: header, the item (or `from scratch`), `Repo` (dropdown, from-scratch mode only), `Worktree` + the full destination path in `dim`, `Branch` (+ a `▾ N` popover listing the repo's existing branches, from-scratch mode), the agent dropdown, and `Cancel` / `Create`. Fields are 30 px, `chrome` fill, `input` border.
-- `Repos`, 480 px: `Repos` + `N of M`, the scanned folder path, `Rescan` and `Folder…`, a list of `owner/name` rows with 14 px checkboxes (`accent` when on), and `All` / `None` / `Done`.
+**Two dialogs** open from the Issues panel, both `frame: "none"` so they draw their own card on `popover` with `rounded(12)` and `shadow_lg`:
 
 ## How it behaves
 
@@ -35,7 +34,13 @@ Top to bottom:
 
 **Hover.** Resting on a row for a moment fetches that item's details (`gh pr view` / `gh issue view --json`) once, cached until its `updatedAt` changes, and shows a 440 px card in a `Popup` layer anchored `right_center` of the row: same content as the docked card, but with the description in a fixed box (up to 320 px, estimated from the wrapped line count) instead of filling the column. Leaving the row and not entering the card closes it after 220 ms. Only the row under the pointer builds a card.
 
-**Click.** A row selects it (docked card, second click closes). The branch button opens the item's existing worktree if there is one — `space.select` on the space whose folder is the worktree, plus `tab.select` when a tab with that name exists — otherwise it opens the `Worktree + agent` dialog. Selecting the `New` button opens the same dialog in `from scratch` mode.
+**Click.** A row selects it (docked card, second click closes) *and* jumps to the agent working on that issue when one exists (`openExisting`: `space.select` + `tab.select`). The branch button opens the item's existing worktree if there is one, otherwise the `Worktree + agent` dialog. Selecting the `New` button opens the same dialog in `from scratch` mode.
+
+**Follow both ways.** Clicking an agent in the sidebar (`agents-follow`) writes `shared("gh-board.follow")` `{folder, tab, cwd, at}`; the board resolves the issue/PR number from the tab (`#28 …`) or the worktree branch (`28-…`), scopes it to the repo (checkout containing the folder, else the worktree's repo dir name), prefers an open PR on a number tie, selects the row and docks its card — clearing the selection when nothing matches. The filter is widened to `all` (and the changes-requested filter lifted) when it would hide the target. A follow is applied once per click (`followKey`), retried across renders while the list loads, and a stale follow present at board start is ignored.
+
+**Trees.** `gh-trees` runs `git worktree list --porcelain` in every checkout under `~/repo` every 15 s. A row click runs `space.select` on the space whose folder is that path, or `space.new {name, folder}` when none shows it. The active space's folder highlights.
+
+**Panel memory.** `tabs-gh` remembers the open panel per space id in `localStorage` (`panels`): switching spaces restores that space's panel, opening/closing records it. A space with no memory opens on Issues — only an explicit close (`null`) keeps the column shut.
 
 **The dialogs.** In `Worktree + agent` the worktree and branch default to `slug("<number>-<title>")` of the item (or the repo folder's name from scratch); the agent defaults to the one remembered in `shared("gh-board.agent")`, else the first installed. `Create` first asks git whether the branch is a branch at all (`git check-ref-format --branch`), then does `git worktree add` into `~/.herdr/worktrees/<repo>/<name>` (with `-b <branch> HEAD` when the branch does not exist; `--` before every positional), then `space.new {name: <repo>, folder: <worktree>, tab: "<#number> title", argv: <agent>}`. The path must stay under `~/.herdr/worktrees/`, and a folder git does not know is initialised only when git says "not a git repository", never `$HOME` or `/`. If that folder is already a space it selects it and adds the tab instead. Escape, the dialog frame's ✕-free cancel path or `Cancel` closes it; Enter in either field creates.
 
@@ -45,13 +50,20 @@ Top to bottom:
 
 ## Built from
 
-The layout is Herdr 0.1.11's `main`, copied by `layout.clone`, with two edits: the `tabs` block's `content.mod` is `tabs-gh`, and `panel-body` (the stack in the `panel` column, min 280 / max 900, hidden) gained
+The layout is Herdr 0.1.11's `main`, copied by `layout.clone`, with four edits: the `tabs` block's `content.mod` is `tabs-gh`, the `agents` block's is `agents-follow`, `panel-body` (the stack in the `panel` column, min 280 / max 900, shown, `active: gh-board`) gained two blocks:
 
 ```json
-{ "id": "gh-board", "type": "block", "content": { "mod": "gh-board" } }
+{ "id": "gh-board", "type": "block", "content": { "mod": "gh-board" } },
+{ "id": "gh-trees", "type": "block", "content": { "mod": "gh-trees" } }
 ```
 
-`mods/tabs-gh` is Herdr 0.1.11's `tabs` copied by `mod.clone`, with `gh-board` unioned into the `enabled` list (so a `workspace.panels` value that predates it does not hide the button) and one more `panelButton("gh-board", "Issues", "mods/gh-board/inbox.svg")`.
+`mods/tabs-gh` is Herdr 0.1.11's `tabs` copied by `mod.clone`, with `gh-board` and `gh-trees` unioned into the `enabled` list (so a `workspace.panels` value that predates them does not hide the buttons), two more `panelButton`s (`Issues`, `Trees`), the `+` button pointed at `new-menu-pinned`, and the per-space default-open panel memory above.
+
+`mods/agents-follow` is Herdr 0.1.13's `agents` copied by `mod.clone`: both row clicks call `follow(a)` (`pane.focus` + the `gh-board.follow` write) instead of `pane.focus` alone. Everything else is the shipped mod.
+
+`mods/new-menu-pinned` is Herdr 0.1.13's `new-menu` copied by `mod.clone`: the installed list is stable-sorted by `pinRank` (`PINNED = ["hermes", "oh-my-pi", "pi"]`, matched case-insensitively against key + name). Non-matching entries are ignored; the `1-9` shortcuts follow the sorted order.
+
+`mods/gh-trees/main.js` (≈110 lines) is the worktree browser: `fs/promises` `readdir` + `exec("git", ["-C", dir, "worktree", "list", "--porcelain"])`, `spaces()` for the highlight and the jump, `run("space.select"/"space.new")`. Its own `branch.svg` (copied from gh-board's).
 
 `mods/gh-board/main.js` (≈570 lines) is the panel: `View` with `init(props, cx)`, a 60 s `cx.timer.every`, and `cx.spawn` for every host call. It uses `div/h_flex/v_flex`, `Popup`, `TextView.markdown`, and from `herdr`: `exec`, `home()`, `theme()`, `settings()`, `openOverlay`, `run`, `spaces`, `shared`, `setShared`, plus `fs/promises`' `readdir`. Commands it runs: `space.select`, `tab.select`, `pane`-free; programs: `git`, `gh`, `xdg-open`/`open`. Images: `mods/gh-board/branch.svg` (octicon git-branch, 16 px grid) and `mods/gh-board/inbox.svg` (octicon issue-opened).
 
@@ -61,11 +73,11 @@ Each `mod.json` carries `"version"` (this package: `1.0.0`), which is what an in
 
 `mods/gh-repos/main.js` is the picker: `pickFolder()`, `shared`/`setShared`, `svg` for the checkmark.
 
-Shared state between them: `gh-board.repos` (`[{repo, dir}]`), `gh-board.selected` (`null` or `[owner/name]`), `gh-board.root` (folder), `gh-board.rescan` (a timestamp), `gh-board.agent` (an agent name, `null`, or `"shell"`).
+Shared state between them: `gh-board.repos` (`[{repo, dir}]`), `gh-board.selected` (`null` or `[owner/name]`), `gh-board.root` (folder), `gh-board.rescan` (a timestamp), `gh-board.agent` (an agent name, `null`, or `"shell"`), `gh-board.follow` (`{folder, tab, cwd, at}` from the last agent click).
 
 ## Watch out
 
-- **Two clones, one copy each.** `main-gh` and `tabs-gh` are snapshots: they do not track Herdr. Re-clone and re-apply the two edits above when you want the shipped versions' improvements.
+- **Four clones, one copy each.** `main-gh`, `tabs-gh`, `agents-follow` and `new-menu-pinned` are snapshots: they do not track Herdr. Re-clone and re-apply the edits above when you want the shipped versions' improvements.
 - **The panel is where the clones meet.** Without `tabs-gh` there is no `Issues` button; without the `gh-board` block in `panel-body` the button toggles nothing. Both edits are one line each.
 - **Names must match across mods.** `gh-board` finds a worktree by path: `~/.herdr/worktrees/<repo folder name>/<slug(number-title)>`, and the tab by its name (`"#12 title"`, truncated to 64). `gh-new` builds the same two strings. Change the naming formula in one and "Open worktree" stops finding the other's worktrees. The `slug()` in both mods must stay identical: it keeps `[A-Za-z0-9._-]`, collapses dot runs, and trims leading/trailing dots and dashes, so a name is valid both as a path component and as a git ref — and both sides need the `|| "repo"` fallback for a folder whose name survives as nothing (a non-ASCII folder name).
 - **Widths are estimated.** The one-line/two-line decision for the filter chips uses a character-width estimate (`0.56 × font size` in the monospace UI font, times `settings().zoom`, plus padding and 12 px slack), calibrated against a 396 px panel at zoom 1.1. A very different zoom or font may wrap a little early or late — never overlap.
@@ -82,13 +94,17 @@ Shared state between them: `gh-board.repos` (`[{repo, dir}]`), `gh-board.selecte
 
 ## Done when
 
-1. `herdr-app check` passes for `gh-board`, `gh-new`, `gh-repos` and `tabs-gh`.
-2. `herdr-app do layout.switch --name main-gh` shows a third `Issues` button in the tab bar, and clicking it opens a right-hand column with the header `Issues & PRs`, a `Repos N/N` count, and as many rows as the folder's repos have open items (or `Nothing open`, which is a valid result).
+1. `herdr-app check` passes for all seven mods.
+2. `herdr-app do layout.switch --name main-gh` shows `Issues` and `Trees` buttons in the tab bar; the right column is open on `Issues & PRs` with a `Repos N/N` count and as many rows as the folder's repos have open items (or `Nothing open`, which is a valid result).
 3. Clicking `All` / `Issues` / `PRs` changes the rows within a frame, and the counts in the chips match the rows.
 4. With at least one PR in `changes requested`, the chip appears red at the right; clicking it removes those rows and adds a `✕`, and the ✕ puts them back.
 5. Clicking `Repos` lists every repo the panel scanned, `All` / `None` change the count in the panel behind it, and `Rescan` picks up a checkout created after the panel started.
-6. Hovering a row shows a card to its left with a real description; clicking the row docks the same card at the bottom of the column with `Open worktree` / `New worktree` / `GitHub`.
+6. Hovering a row shows a card to its left with a real description; clicking the row docks the same card at the bottom of the column with `Open worktree` / `New worktree` / `GitHub` — and switches to that issue's agent tab when one exists.
 7. `New worktree` on a PR opens the dialog with the worktree and branch named after it; `Create` produces a space named after the repo, containing a checkout under `~/.herdr/worktrees/` (verify with `git worktree list` in the repo) and a tab named `#<number> <title>` running the chosen agent with an empty prompt.
 8. On that same PR, the branch button now switches to that space instead of opening the dialog, and the icon is accent-coloured.
 9. In the dialog, `Branch` = `--force` (or `a..b`) is refused with "not a valid branch name" before anything is written, and `Worktree` = `.` or `..` never leaves `~/.herdr/worktrees/` (it becomes `worktree`).
 10. An issue whose body contains `![x](https://example.com/p.png)` and `<img src=…>` renders as text only, and the panel's footer/description does not grow the panel: images are gone, the body is capped.
+11. Clicking an agent in the sidebar selects its issue/PR in the Issues panel and docks the card; clicking an agent that works on no issue clears the selection.
+12. The `Trees` button shows every checkout under `~/repo` grouped by repo with the active space highlighted; clicking another row switches to (or opens) that space.
+13. Closing the right column on one space and switching spaces keeps it closed there but open elsewhere; a space never touched opens on Issues.
+14. The `+` menu lists the `PINNED` agents first, in order, with `1-9` shortcuts following that order.

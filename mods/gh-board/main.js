@@ -159,6 +159,38 @@ function openGitHub(url, cx) {
   cx.open_url(url);
 }
 
+// agents-follow writes {folder, tab, cwd, at} when an agent row is clicked.
+// The number comes from the tab ("#28 ...") or the worktree branch
+// ("28-..."); the repo from the checkout containing the folder, else the
+// worktree's repo dir name. An issue and its fix PR share the number, so an
+// open PR wins. No match: follow is ignored.
+function followTarget(follow, repos, items) {
+  if (!follow || typeof follow !== "object") return null;
+  const folder = [follow.folder, follow.cwd].find((p) => typeof p === "string" && p);
+  const tab = typeof follow.tab === "string" ? follow.tab : "";
+  const tabNum = (tab.match(/^#(\d+)\b/) || [])[1];
+  const wt = folder && /[\\/]\.herdr[\\/]worktrees[\\/]/.test(folder)
+    ? folder.split(/[\\/]/).filter(Boolean).slice(-2)
+    : null;
+  const wtNum = wt && (wt[1].match(/^(\d+)-/) || [])[1];
+  const n = tabNum || wtNum;
+  if (!n) return null;
+  let repoNames = [];
+  if (folder) {
+    repoNames = repos.filter((e) => folder === e.dir || folder.startsWith(`${e.dir}/`)).map((e) => e.repo);
+    if (!repoNames.length && wt) {
+      const want = wt[0].toLowerCase();
+      repoNames = repos
+        .filter((e) => slug(e.dir.split("/").filter(Boolean).pop() || "").toLowerCase() === want)
+        .map((e) => e.repo);
+    }
+  }
+  const pool = items.filter((i) => i.number === Number(n));
+  const scoped = repoNames.length ? pool.filter((i) => repoNames.includes(i.repo)) : pool;
+  const list = scoped.length ? scoped : pool;
+  if (!list.length) return null;
+  return list.find((i) => i.kind === "pr") ?? list[0];
+}
 export default class GhBoard extends View {
   init(props, cx) {
     this.props = props || {};
@@ -178,6 +210,7 @@ export default class GhBoard extends View {
     this.hoverHold = false;
     this.selectedKey = JSON.stringify(shared("gh-board.selected") ?? null);
     this.rootKey = `${shared("gh-board.root") ?? ""}|${shared("gh-board.rescan") ?? 0}`;
+    this.followKey = JSON.stringify(shared("gh-board.follow") ?? null);
     this.refresh(cx, true);
     cx.timer.every(REFRESH_MS, (cx) => this.refresh(cx));
   }
@@ -335,11 +368,45 @@ export default class GhBoard extends View {
     });
   }
 
-  // Clicking a row shows its box at the bottom of the column; clicking it again hides it.
+  // Clicking a row docks its card AND jumps to the agent working on it (the
+  // branch button's openExisting): the whole row goes to the tab, not just
+  // the icon. No worktree yet: just dock/undock the card as before.
   selectRow(item, cx) {
     this.selected = this.selected === item.key ? null : item.key;
-    if (this.selected) this.loadDetail(item, cx);
+    if (this.selected) {
+      this.loadDetail(item, cx);
+      this.openExisting(item);
+    }
     cx.notify();
+  }
+
+  // An agent row was clicked elsewhere: select its issue/PR, open it in the
+  // bottom dock, and make sure the current filter shows it. Retried on every
+  // render until the items arrive (followKey is stamped only on success, and
+  // only one follow per agent click is applied). A click that matches nothing
+  // (an agent on no issue/PR) clears the selection instead of keeping a stale card.
+  applyFollow(cx) {
+    const follow = shared("gh-board.follow");
+    const key = JSON.stringify(follow ?? null);
+    if (!follow || key === this.followKey || !this.repos) return;
+    const target = followTarget(follow, this.repos, this.items);
+    if (!target) {
+      if (!this.items.length) return; // list still loading: retry later
+      this.followKey = key; // definitive miss: clear, don't loop
+      this.selected = null;
+      return;
+    }
+    this.followKey = key;
+    if (this.filter !== "all" && this.filter !== target.kind) {
+      this.filter = "all";
+      store("gh-board.filter", "all");
+    }
+    if (this.hideChanges && isChanges(target)) {
+      this.hideChanges = false;
+      store("gh-board.hideChanges", "");
+    }
+    this.selected = target.key;
+    this.loadDetail(target, cx);
   }
 
   setFilter(value, cx) {
@@ -549,6 +616,7 @@ export default class GhBoard extends View {
       this.rootKey = rootKey;
       this.refresh(cx, true);
     }
+    this.applyFollow(cx);
 
     this.openFolders = new Set(spaces().map((space) => space.folder ?? ""));
     const changes = this.items.filter(isChanges).length;

@@ -27,7 +27,8 @@ export default class Tabs extends View {
   }
 
   // The side panel is remembered per space: switching shows that space's choice
-  // (closed if it never had one), and opening or closing it records it.
+  // (open on Issues if it never had one — only an explicit close keeps it
+  // shut), and opening or closing it records it.
   syncPanel(space, panel, body, enabled) {
     if (!space || !panel) return;
     const now = panel.hidden ? null : body?.active ?? null;
@@ -35,7 +36,8 @@ export default class Tabs extends View {
       const first = this.space === undefined;
       this.space = space.id; this.pending = null;
       if (!(first && !Object.hasOwn(this.panels, space.id))) {
-        const stored = this.panels[space.id] ?? null, want = enabled.includes(stored) ? stored : null;
+        const stored = Object.hasOwn(this.panels, space.id) ? this.panels[space.id] : "gh-board";
+        const want = stored === null ? null : enabled.includes(stored) ? stored : "gh-board";
         if (want !== now) {
           this.pending = { want, until: Date.now() + 1000 };
           if (want) { run("layout.select", { stack: "panel-body", child: want }); run("layout.show", { id: "panel" }); }
@@ -88,7 +90,7 @@ export default class Tabs extends View {
     const panel = find(root, "panel"), body = find(root, "panel-body");
     const raw = shared("workspace.panels");
     const bases = Array.isArray(raw) ? raw.filter((name) => typeof name === "string") : ["files", "changes"];
-    const enabled = [...new Set([...bases, "gh-board"])];
+    const enabled = [...new Set([...bases, "gh-board", "gh-trees"])];
     this.syncPanel(space, panel, body, enabled);
     const panelButton = (id, label, icon) => {
       const on = panel && !panel.hidden && body?.active === id;
@@ -105,11 +107,13 @@ export default class Tabs extends View {
       .on_scroll_wheel(e => { if (Math.abs(e.delta.y) >= 1) run(e.delta.y > 0 ? "tab.prev" : "tab.next"); })
       .child(h_flex().id("tab-scroll").flex_1().min_w(0).h_full().items_center().gap(3).overflow_x_scrollbar()
         .children(shown.map(item))
-        .child(button("tab-new", "+", () => openOverlay({ mod: "new-menu", kind: "popup", width: 250, height: 512 }))))
+        .child(button("tab-new", "+", () => openOverlay({ mod: "new-menu-pinned", kind: "popup", width: 250, height: 512 }))))
       .when(enabled.includes("files"), el => el.child(panelButton("files", "Files", "mods/files/file.svg")))
       .when(enabled.includes("changes"), el => el.child(panelButton("changes", "Changes", "mods/changes/changes.svg")))
       // gh-board: the issues/PRs panel this copy of the tab bar adds.
       .when(enabled.includes("gh-board"), el => el.child(panelButton("gh-board", "Issues", "mods/gh-board/inbox.svg")))
+      // gh-trees: the open-worktrees panel, grouped by repo.
+      .when(enabled.includes("gh-trees"), el => el.child(panelButton("gh-trees", "Trees", "mods/gh-trees/branch.svg")))
       .when(w?.buttons, el => el.child(button("minimize", w.platform === "windows" ? svg("mods/tabs-gh/win-min.svg").size(16) : "−", () => run("window.minimize")))
         .child(button("maximize", w.platform === "windows" ? svg(`mods/tabs-gh/${w.maximized ? "win-restore" : "win-max"}.svg`).size(16) : "□", () => run("window.maximize")))
         .child(button("close-window", w.platform === "windows" ? svg("mods/tabs-gh/win-close.svg").size(16) : svg("mods/pane/close.svg").size(13), () => run("window.close"))));
