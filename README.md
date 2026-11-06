@@ -64,7 +64,7 @@ The dialog is pre-filled from the issue or PR: `#12 fix(probe): read Apple Silic
 </tr>
 </table>
 
-`Create` runs `git worktree add` (a branch that already exists is checked out, a new one starts from `HEAD`), then `space.new` — so you get a space named after the repo, a tab named after the issue, and the agent running there with an empty prompt.
+`Create` runs `git worktree add` (a branch that already exists is checked out, a new one starts from `HEAD`), then `space.new` — so you get a space named after the worktree (usually the branch; repo-prefixed only on a name clash), a tab named after the issue, and the agent running there with an empty prompt.
 
 ## Repos
 
