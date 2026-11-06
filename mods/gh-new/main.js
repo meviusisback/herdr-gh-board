@@ -209,8 +209,16 @@ export default class GhNew extends View {
           : ["worktree", "add", "-b", branch, "--", path, "HEAD"];
         const made = await exec("git", ["-C", root, ...add]);
         if (made.code !== 0) throw new Error((made.stderr || made.stdout || "git worktree add failed").trim().split("\n").pop());
-        // Named after the repo: the checkout is what varies, the project is not.
-        const args = { name: folderName(root), folder: path, machine: null, tab };
+        // Named after the worktree (usually the branch), never the repo: two
+        // checkouts of one repo must not share a space name. A still-clashing
+        // name (same worktree in another repo) gets the repo as prefix, then
+        // a number: every new space name is unique on this machine.
+        const base = slug(this.worktree) || "worktree";
+        const taken = new Set(spaces().filter((s) => (s.machine ?? null) === null).map((s) => s.name));
+        const prefixed = `${folderName(root)} ${base}`;
+        let name = taken.has(base) ? prefixed : base;
+        for (let n = 2; taken.has(name); n++) name = `${prefixed} ${n}`;
+        const args = { name, folder: path, machine: null, tab };
         if (agent) args.argv = agent;
         run("space.new", args);
         closeOverlay(props().overlay);

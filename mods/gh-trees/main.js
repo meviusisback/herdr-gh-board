@@ -58,10 +58,14 @@ export default class GhTrees extends View {
 
   // The space showing this folder (a worktree space), else the main checkout's
   // own space if the folder is a main checkout shown somewhere.
-  openTree(path, name) {
+  openTree(path, name, qualifier) {
     const space = spaces().find((s) => s.folder === path);
     if (space) { run("space.select", { id: space.id }); return; }
-    run("space.new", { name, folder: path });
+    // Never a second space with the same name (gh-new guards the same way).
+    let fresh = name;
+    if (qualifier && spaces().some((s) => s.name === fresh)) fresh = `${name} · ${qualifier}`;
+    if (spaces().some((s) => s.name === fresh)) fresh = `${name} · ${path}`;
+    run("space.new", { name: fresh, folder: path });
   }
 
   treeRow(repo, wt, t, current) {
@@ -70,7 +74,7 @@ export default class GhTrees extends View {
     const on = current === wt.path;
     return h_flex().id(`ght-${wt.path}`).h(28).flex_none().px(8).gap(8).items_center().rounded(6).cursor_pointer()
       .when(on, (e) => e.bg(t.selected)).hover((s) => s.bg(t.hover))
-      .on_click(() => this.openTree(wt.path, main ? repo.name : label))
+      .on_click(() => this.openTree(wt.path, main ? repo.name : label, main ? "checkout" : repo.name))
       .child(svg("mods/gh-trees/branch.svg").size(12).flex_none().text_color(on ? t.accent : t.dim))
       .child(div().flex_1().min_w(0).truncate().text_color(on ? t.foreground : t.muted).child(label))
       .when(Boolean(wt.branch) && wt.branch !== label, (e) => e.child(div().flex_none().text_size(10.5).text_color(t.dim).child(text(wt.branch))))
