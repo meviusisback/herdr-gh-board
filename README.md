@@ -1,4 +1,22 @@
-# Repos & Agents
+<div align="center">
+
+# Repos & Agents — a Herdr layout
+
+**Your repos, their branches and worktrees, and the agents working in them — as one tree you can read at a glance, with one git panel beside it and a wall that shows every running agent at once.**
+
+[![Herdr](https://img.shields.io/badge/herdr-0.1.16%2B-6d5efc?style=flat-square)](https://herdr.dev)
+[![kind](https://img.shields.io/badge/kind-layout-2f81f7?style=flat-square)](#install)
+[![mods](https://img.shields.io/badge/mods-17-8957e5?style=flat-square)](#what-you-see)
+[![needs](https://img.shields.io/badge/needs-git%20%7C%20gh%20%7C%20hc%20%7C%20sqlite3-2ea043?style=flat-square)](#requirements)
+[![platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20windows-8b949e?style=flat-square)](#requirements)
+[![network](https://img.shields.io/badge/network-gh%20API%2C%20agents%20opt--in-d29922?style=flat-square)](#what-it-talks-to)
+[![license](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](LICENSE)
+
+<img src="preview.png" alt="Herdr with the Repos & Agents layout: the spaces tree on the left, one pane in the middle, the git panel on the right" width="100%">
+
+</div>
+
+---
 
 A Herdr window built around the repos you keep in one folder: a sidebar that is a tree of every
 repo → its main checkout, branches and worktrees → the agents running in each, how far each one
@@ -6,12 +24,30 @@ is from origin and from main, and in what state its agents are; one git panel on
 (every worktree, the commit graph, the open issues and PRs); and a wall that shows the running
 agents side by side without moving anything.
 
-![Repos & Agents](preview.png)
+## Install
 
-Layout `repos-and-agents` and 17 mods. Install it by asking your agent to read this repo (see
-[RECIPE.md](RECIPE.md)) or by copying `layouts/repos-and-agents.json` and `mods/` into
-`~/.config/herdr-app/` and merging `keys.json`. Herdr's own mods stay Herdr's: this uses the ones
-every install already has.
+Layout `repos-and-agents` and 17 mods. Ask your agent to read this repo (see
+[RECIPE.md](RECIPE.md)) — the shortest path — or copy `layouts/repos-and-agents.json` and `mods/`
+into `~/.config/herdr-app/` yourself and merge `keys.json` (Herdr asks before replacing a key you
+already use). Then `Ctrl+Shift+L` picks the layout. Herdr's own mods stay Herdr's: this uses the
+ones every install already has.
+
+## Requirements
+
+- Herdr app 0.1.16 or newer; everything it needs of herdr-core comes with it (`hc`).
+- `git` for every read in the tree and the panels; `gh` (authenticated) for issues, pull
+  requests and making a repo; `sqlite3` to read omp's and opencode's own stores for an agent's
+  prompt and model (without it those columns are simply empty).
+- Linux, macOS or Windows. The tab bar draws the window's buttons with vector icons on Linux and
+  Windows; on macOS Herdr's traffic lights sit at 12,16.
+
+## What it talks to
+
+- `git`, `gh`, `hc`, `sqlite3`, `powershell.exe` (Windows paths) on your own machine, and the
+  agent CLIs you start.
+- The GitHub API through `gh`, for issues and PRs of the repos you keep in the folder.
+- Nothing else, unless you set `HERDR_AI_BASE` and `HERDR_AI_KEY`: then Commit/Merge drafting can
+  post the diff you picked to that OpenAI-compatible endpoint. It is off until you set both.
 
 ## What you see
 
