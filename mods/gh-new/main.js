@@ -203,12 +203,36 @@ export default class GhNew extends View {
           if (commit.code !== 0) throw new Error((commit.stderr || "git commit failed").trim().split("\n").pop());
           root = this.folder;
         }
+        // A PR worktree starts on the commit GitHub has for its head — from a fork or not — so
+        // the space's chips compare the real PR with main; an issue starts a fresh branch from
+        // HEAD. Both refresh origin first: the panel reads origin/main for that comparison.
+        const pr = Number(props()?.pr) || 0;
+        await exec("git", ["-C", root, "fetch", "--quiet", "origin"]).catch(() => null);
+        let start = "HEAD";
+        if (pr) {
+          const head = await exec("git", ["-C", root, "fetch", "--quiet", "origin", `+refs/pull/${pr}/head:refs/remotes/origin/pr/${pr}`]);
+          if (head.code !== 0) throw new Error((head.stderr || head.stdout || "Could not fetch the pull request.").trim().split("\n").pop());
+          start = `refs/remotes/origin/pr/${pr}`;
+        }
         const known = await exec("git", ["-C", root, "show-ref", "--verify", "--quiet", `refs/heads/${branch}`]);
+        if (known.code === 0 && pr) {
+          // Reuse the branch name only when no worktree has it checked out: moving a live
+          // checkout would rewrite what that space shows.
+          const list = await exec("git", ["-C", root, "worktree", "list", "--porcelain"]);
+          if (String(list.stdout ?? "").includes(`branch refs/heads/${branch}\n`)) {
+            throw new Error(`"${branch}" is checked out in another worktree; pick another branch name.`);
+          }
+          const moved = await exec("git", ["-C", root, "branch", "-f", branch, start]);
+          if (moved.code !== 0) throw new Error((moved.stderr || "git branch failed").trim().split("\n").pop());
+        }
         const add = known.code === 0
           ? ["worktree", "add", "--", path, branch]
-          : ["worktree", "add", "-b", branch, "--", path, "HEAD"];
+          : ["worktree", "add", "-b", branch, "--", path, start];
         const made = await exec("git", ["-C", root, ...add]);
         if (made.code !== 0) throw new Error((made.stderr || made.stdout || "git worktree add failed").trim().split("\n").pop());
+        // `-b` from a remote-tracking ref makes git track it; a PR ref is not a branch to push
+        // to, so the space says "local" instead of promising an upstream it must not use.
+        if (pr) await exec("git", ["-C", path, "branch", "--unset-upstream"]).catch(() => null);
         // Named after the worktree (usually the branch), never the repo: two
         // checkouts of one repo must not share a space name. A still-clashing
         // name (same worktree in another repo) gets the repo as prefix, then
@@ -218,7 +242,7 @@ export default class GhNew extends View {
         const prefixed = `${folderName(root)} ${base}`;
         let name = taken.has(base) ? prefixed : base;
         for (let n = 2; taken.has(name); n++) name = `${prefixed} ${n}`;
-        const args = { name, folder: path, machine: null, tab };
+        const args = { name, folder: path, machine: "", tab }; // "" is this computer: null would mean the shown space's machine
         if (agent) args.argv = agent;
         run("space.new", args);
         closeOverlay(props().overlay);
@@ -239,12 +263,12 @@ export default class GhNew extends View {
   box(input, t) {
     return div().flex_1().min_w(0).h(30).px(9).flex().items_center().rounded(7).bg(t.chrome)
       .border_1().border_color(t.input).cursor_text().on_mouse_down("left", (_e, cx) => cx.stop_propagation())
-      .child(Input.new(input).h_full().text_size(12).text_color(t.foreground));
+      .child(Input.new(input).h_full().text_size(12.5).text_color(t.foreground));
   }
 
   field(label, input, t) {
     return h_flex().gap(8).items_center()
-      .child(div().w(70).flex_none().text_size(11).text_color(t.muted).child(label))
+      .child(div().w(70).flex_none().text_size(12).text_color(t.muted).child(label))
       .child(this.box(input, t));
   }
 
@@ -252,14 +276,14 @@ export default class GhNew extends View {
     return div().id(id).h(30).flex_1().min_w(0).px(9).flex().items_center().gap(6).rounded(7).bg(t.chrome)
       .border_1().border_color(open ? t.accent : t.input).cursor_pointer()
       .hover((s) => s.bg(t.hover))
-      .child(div().flex_1().min_w(0).truncate().text_size(11.5).text_color(t.foreground).child(label))
-      .child(div().text_size(9).text_color(t.dim).child("▾"));
+      .child(div().flex_1().min_w(0).truncate().text_size(12.5).text_color(t.foreground).child(label))
+      .child(div().text_size(10.5).text_color(t.dim).child("▾"));
   }
 
   menu(id, rows, t) {
     const height = Math.min(260, Math.max(34, rows.length * 27 + 8));
     return v_flex().id(id).w(250).h(height).p(4).gap(1).rounded(8).bg(t.popover)
-      .border_1().border_color(t.border).shadow_lg().text_size(11.5)
+      .border_1().border_color(t.border).shadow_lg().text_size(12.5)
       .overflow_y_scrollbar().children(rows);
   }
 
@@ -268,7 +292,7 @@ export default class GhNew extends View {
     for (const [index, agent] of (this.agents ?? []).entries()) {
       rows.push(this.menuRow(`gh-agent-${index}`, agent.name ?? agent.run.join(" "), agent, this.agent === index, t, () => this.pickAgent(index, cx)));
     }
-    if (!this.agents) rows.push(div().p(6).text_size(11).text_color(t.dim).child("Looking…"));
+    if (!this.agents) rows.push(div().p(6).text_size(12).text_color(t.muted).child("Looking…"));
     return this.menu("gh-agent-menu", rows, t);
   }
 
@@ -285,7 +309,7 @@ export default class GhNew extends View {
   repoMenu(t, cx) {
     const rows = scanned().map((entry) => this.menuRow(`gh-repo-${entry.repo}`, entry.repo, null, entry.dir === this.folder, t, () => this.pickRepo(entry, cx)));
     rows.push(this.menuRow("gh-repo-other", "Other folder…", null, false, t, () => this.otherFolder(cx)));
-    if (!rows.length) rows.push(div().p(6).text_size(11).text_color(t.dim).child("No repos scanned yet."));
+    if (!rows.length) rows.push(div().p(6).text_size(12).text_color(t.muted).child("No repos scanned yet."));
     return this.menu("gh-repo-menu", rows, t);
   }
 
@@ -299,7 +323,7 @@ export default class GhNew extends View {
       this.worktreeInput.set_value(this.worktree);
       cx.notify();
     }));
-    if (!list.length) rows.push(div().p(6).text_size(11).text_color(t.dim).child("No branches: a new one starts from scratch."));
+    if (!list.length) rows.push(div().p(6).text_size(12).text_color(t.muted).child("No branches: a new one starts from scratch."));
     return this.menu("gh-branch-menu", rows, t);
   }
 
@@ -309,49 +333,49 @@ export default class GhNew extends View {
     const repo = this.mode === "repo" ? (this.repo || "Choose a repo") : this.repo;
     const branchRows = this.branches ?? [];
 
-    return v_flex().w_full().p(14).gap(10).text_color(t.foreground).text_size(12.5)
+    return v_flex().w_full().p(14).gap(10).text_color(t.foreground).text_size(13)
       .when(framed, (e) => e.rounded(12).bg(t.popover).border_1().border_color(t.border).shadow_lg())
       .child(h_flex().gap(8).items_center()
         .child(div().font_semibold().child("Worktree + agent"))
         .child(div().flex_1())
-        .child(div().text_size(10.5).text_color(t.dim).child(this.mode === "repo" ? "from scratch" : this.repo)))
-      .when(this.mode === "item" && Boolean(this.label), (e) => e.child(div().text_size(11.5).text_color(t.muted).truncate().child(this.label)))
+        .child(div().text_size(11.5).text_color(t.muted).child(this.mode === "repo" ? "from scratch" : this.repo)))
+      .when(this.mode === "item" && Boolean(this.label), (e) => e.child(div().text_size(12.5).text_color(t.muted).truncate().child(this.label)))
       .when(this.mode === "repo", (e) => e.child(h_flex().gap(8).items_center()
-        .child(div().w(70).flex_none().text_size(11).text_color(t.muted).child("Repo"))
+        .child(div().w(70).flex_none().text_size(12).text_color(t.muted).child("Repo"))
         .child(Popover.new("gh-repo-pop").trigger(this.trigger("gh-repo-trigger", repo, this.repoOpen, t))
           .anchor("bottom_left").open(this.repoOpen)
           .on_open_change((open, cx) => { this.repoOpen = open; cx.notify(); })
           .content(this.repoMenu(t, cx)))))
       .child(this.field("Worktree", this.worktreeInput, t))
-      .child(div().text_size(10).text_color(t.dim).child(this.folder ? `→ ${this.path()}` : "Pick a repo to see where it goes."))
+      .child(div().text_size(11).text_color(t.muted).child(this.folder ? `→ ${this.path()}` : "Pick a repo to see where it goes."))
       .child(h_flex().gap(8).items_center()
-        .child(div().w(70).flex_none().text_size(11).text_color(t.muted).child("Branch"))
+        .child(div().w(70).flex_none().text_size(12).text_color(t.muted).child("Branch"))
         .child(this.box(this.branchInput, t))
         .when(this.mode === "repo", (e) => e.child(Popover.new("gh-branch-pop")
           .trigger(div().id("gh-branch-trigger").h(30).px(8).flex().items_center().rounded(7).bg(t.chrome).cursor_pointer()
             .border_1().border_color(this.branchOpen ? t.accent : t.input).hover((s) => s.bg(t.hover))
-            .child(div().text_size(10.5).text_color(t.muted).child(branchRows.length ? `▾ ${branchRows.length}` : "▾")))
+            .child(div().text_size(11.5).text_color(t.muted).child(branchRows.length ? `▾ ${branchRows.length}` : "▾")))
           .anchor("bottom_right").open(this.branchOpen)
           .on_open_change((open, cx) => { this.branchOpen = open; cx.notify(); })
           .content(this.branchMenu(t, cx)))))
-      .child(div().text_size(10).text_color(t.dim)
+      .child(div().text_size(11).text_color(t.muted)
         .child(this.mode === "repo" && this.isRepo === false
           ? "Not a repository yet: it is initialized and the branch starts there."
           : "An existing branch is checked out; a new one starts from HEAD."))
       .child(h_flex().gap(8).items_start()
-        .child(div().w(70).flex_none().pt(4).text_size(11).text_color(t.muted).child("Agent"))
+        .child(div().w(70).flex_none().pt(4).text_size(12).text_color(t.muted).child("Agent"))
         .child(Popover.new("gh-agent-pop")
           .trigger(this.trigger("gh-agent-trigger", this.agentName(), this.agentOpen, t))
           .anchor("bottom_left").open(this.agentOpen)
           .on_open_change((open, cx) => { this.agentOpen = open; cx.notify(); })
           .content(this.agentMenu(t, cx))))
-      .when(Boolean(this.error), (e) => e.child(div().text_size(11).text_color(t.ansi1).child(this.error)))
+      .when(Boolean(this.error), (e) => e.child(div().text_size(12).text_color(t.ansi1).child(this.error)))
       .child(h_flex().gap(8).items_center().pt(2)
-        .child(div().flex_1().min_w(0).truncate().text_size(10).text_color(t.dim).child(this.tabName || this.branch || ""))
-        .child(div().id("gh-new-cancel").h(26).px(12).flex().items_center().rounded(7).text_size(11.5).cursor_pointer()
+        .child(div().flex_1().min_w(0).truncate().text_size(11).text_color(t.muted).child(this.tabName || this.branch || ""))
+        .child(div().id("gh-new-cancel").h(26).px(12).flex().items_center().rounded(7).text_size(12.5).cursor_pointer()
           .bg(t.raised).text_color(t.muted).hover((s) => s.bg(t.hover))
           .on_click(() => closeOverlay(props().overlay)).child("Cancel"))
-        .child(div().id("gh-new-create").h(26).px(14).flex().items_center().rounded(7).text_size(11.5).cursor_pointer()
+        .child(div().id("gh-new-create").h(26).px(14).flex().items_center().rounded(7).text_size(12.5).cursor_pointer()
           .bg(this.busy ? t.raised : t.solid).text_color(this.busy ? t.dim : t.solid_foreground)
           .on_click((_e, cx) => this.create(cx)).child(this.busy ? "Creating…" : "Create")));
   }

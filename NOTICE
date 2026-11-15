@@ -1,0 +1,26 @@
+NOTICE
+
+Repos & Agents is a layout for the Herdr app (https://herdr.dev) by meviusisback,
+MIT licensed (see LICENSE).
+
+Some of the mods in mods/ are derived from mods that ship with the Herdr app,
+which is Apache License 2.0 (https://github.com/herdrdev/herdr-app). Their
+`mod.json` records the shipped mod and version they were cloned from, and both
+the shipped and this copy were changed:
+
+  mods/tabs-gh           from Herdr's `tabs`        (0.1.11)
+  mods/menu-gh           from Herdr's `menu`        (0.1.13)
+  mods/new-menu-pinned   from Herdr's `new-menu`    (0.1.13)
+  mods/worktree-gh       from Herdr's `worktree`    (0.1.15)
+  mods/pane-prompt       after Herdr's `pane`       (0.1.11) — its own header, rewritten
+  mods/space-status      after Herdr's `workspace-status`
+  mods/agents-status     after Herdr's `workspace-status`
+
+Herdr's own mods (`workspace-chrome`, `files`, `changes`, `menu`, `settings`
+screens and the rest) are not copied here: the layout uses the ones every Herdr
+install already has.
+
+The model-provider glyphs in mods/spaces-tree/models come from LobeHub's icon
+set (@lobehub/icons-static-svg, MIT) and the Inter font in
+mods/spaces-tree/fonts under the SIL Open Font License; both folders carry
+their own licence.

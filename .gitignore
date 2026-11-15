@@ -1,0 +1,8 @@
+# Written by the Herdr app into every mod folder, on every start.
+mods/*/gpui-kit.d.ts
+mods/*/jsconfig.json
+mods/*/.d.ts
+mods/*/*.error
+
+# Runtime: the wall rewrites this on every agent change.
+layouts/agent-wall.json

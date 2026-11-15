@@ -1,5 +1,7 @@
 {
   "place": "none",
-  "title": "New menu",
-  "version": "1.0.0"
+  "cloned_from": {
+    "name": "new-menu",
+    "version": "0.1.13"
+  }
 }

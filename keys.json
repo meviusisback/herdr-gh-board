@@ -1,0 +1,10 @@
+{
+  "global": {
+    "ctrl-shift-alt-t": "gh-git.trees",
+    "ctrl-shift-alt-c": "gh-git.commits",
+    "ctrl-shift-alt-i": "gh-git.issues",
+    "ctrl-shift-g": "agent-wall.toggle",
+    "ctrl-shift-n": "mod.open:space-new",
+    "ctrl-shift-alt-s": "mod.open:settings"
+  }
+}

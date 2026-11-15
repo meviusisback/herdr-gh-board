@@ -1,0 +1,6 @@
+{
+  "place": "none",
+  "title": "Create GitHub repo",
+  "version": "1.0.0",
+  "overlay": { "kind": "dialog", "width": 470, "height": 340 }
+}

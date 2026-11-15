@@ -1,0 +1,6 @@
+{
+  "place": "none",
+  "title": "New space",
+  "version": "1.2.0",
+  "overlay": { "kind": "dialog", "width": 430, "height": 286 }
+}
