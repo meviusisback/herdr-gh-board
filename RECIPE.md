@@ -8,7 +8,7 @@ Commits, Issues); the bottom bar says what the agents on screen share and how fa
 origin; and a wall shows the running agents side by side without moving anything out of its
 space.
 
-![Repos & Agents](preview.png?v=20261116f)
+![Repos & Agents](preview.png?v=20261116g)
 
 ## What you see
 

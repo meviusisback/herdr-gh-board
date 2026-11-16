@@ -12,7 +12,7 @@
 [![network](https://img.shields.io/badge/network-gh%20API%2C%20thread%20titles-d29922?style=flat-square)](#what-it-talks-to)
 [![license](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](LICENSE)
 
-<img src="preview.png?v=20261116f" alt="Herdr with the Repos & Agents layout: the spaces tree on the left, the agent pane in the middle, the Changes panel on the right" width="100%">
+<img src="preview.png?v=20261116g" alt="Herdr with the Repos & Agents layout: the spaces tree on the left, the agent pane in the middle, the Changes panel on the right" width="100%">
 
 *Screenshots use demo repos and agents, not anyone's real work.*
 
