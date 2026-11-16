@@ -9,10 +9,15 @@
 <meta property="og:title" content="Repos &amp; Agents — a Herdr layout">
 <meta property="og:description" content="Every repo, branch, worktree and agent in one tree. One git panel. A wall of every running agent.">
 <meta property="og:type" content="website">
-<meta property="og:image" content="assets/og.png">
+<meta property="og:image" content="https://meviusisback.github.io/herdr-gh-board/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="655">
+<meta property="og:url" content="https://meviusisback.github.io/herdr-gh-board/">
+<meta name="twitter:image" content="https://meviusisback.github.io/herdr-gh-board/assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236d5efc'/%3E%3Cpath d='M18 22h28M18 32h18M18 42h24' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
 <script>document.documentElement.classList.add("js");</script>
+<link rel="canonical" href="https://meviusisback.github.io/herdr-gh-board/">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -59,7 +64,7 @@
       </p>
       <div class="hero-actions reveal">
         <a class="button primary" href="#install">Install the layout</a>
-        <a class="button ghost" href="https://github.com/meviusisback/herdr-gh-board" target="_blank" rel="noopener">Read the recipe</a>
+        <a class="button ghost" href="https://github.com/meviusisback/herdr-gh-board/blob/main/RECIPE.md" target="_blank" rel="noopener">Read the recipe</a>
       </div>
       <div class="stats reveal" aria-label="At a glance">
         <div class="stat"><strong data-count="17">17</strong><span>mods</span></div>
@@ -74,9 +79,8 @@
         <div class="device-bar" aria-hidden="true">
           <span class="dot red"></span><span class="dot amber"></span><span class="dot green"></span>
           <span class="device-title">~/repo/orbital — Repos &amp; Agents</span>
-          <span class="device-chip">Herdr</span>
         </div>
-        <img src="assets/hero.png" alt="The Repos &amp; Agents layout: a repo tree in the sidebar, an agent pane in the middle, and a git panel on the right" width="1200" height="655">
+        <a class="zoom-link" href="assets/hero.png" target="_blank" rel="noopener" aria-label="Open the preview full size"><img src="assets/hero.png" alt="The Repos &amp; Agents layout: a repo tree in the sidebar, an agent pane in the middle, and a git panel on the right" width="1200" height="655"></a>
         <div class="scanline" aria-hidden="true"></div>
       </div>
       <span class="float-chip chip-a" aria-hidden="true"><b>●</b> blocked → needs you</span>
@@ -114,7 +118,7 @@
         <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h12a4 4 0 0 1 0 8H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m12 19-4-4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
         <h3>Threads that name themselves</h3>
         <p>Rows, pane headers and wall tiles show a short title written from the last prompts — so a thread reads “Fix login redirect”, not the first thing anyone typed.</p>
-        <div class="card-tags"><span>thread-titles</span><span>omp</span><span>pi</span><span>opencode</span></div>
+        <div class="card-tags"><span>thread-titles</span><span>omp</span><span>pi</span><span>opencode</span><span>hermes</span></div>
       </article>
 
       <article class="card reveal">
@@ -171,8 +175,8 @@
         <g class="node root" transform="translate(200 16)">
           <rect width="160" height="52" rx="12" fill="#12151c" stroke="#2a3038"/>
           <circle cx="22" cy="26" r="6" fill="#6d5efc"/>
-          <text x="38" y="24" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12">repos.root</text>
-          <text x="38" y="40" fill="#596170" font-family="ui-monospace, monospace" font-size="9">~/repo</text>
+          <text x="38" y="24" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12" letter-spacing=".08em">REPOS</text>
+          <text x="38" y="40" fill="#596170" font-family="ui-monospace, monospace" font-size="9">~/repo · 3 repos</text>
         </g>
 
         <g class="node repo" transform="translate(20 96)">
@@ -266,8 +270,8 @@
     </div>
     <figure class="wall-frame reveal">
       <div class="wall-glow" aria-hidden="true"></div>
-      <img src="assets/wall.svg" alt="The wall: six live agent terminals in a grid, each headed by its space, thread title and branch" width="1200" height="700">
-      <figcaption><span>Ctrl+Shift+G</span> toggles the wall · picking a tab, agent or space leaves it for that pick</figcaption>
+      <a class="zoom-link" href="assets/wall.svg" target="_blank" rel="noopener" aria-label="Open the wall image full size"><img src="assets/wall.svg" alt="The wall: six live agent terminals in a grid, each headed by its space, thread title and branch" width="1200" height="660"></a>
+      <figcaption><span>Ctrl+Shift+G</span> toggles the wall · picking a tab, agent or space leaves it for that pick · <a href="assets/wall.svg" target="_blank" rel="noopener">full size ↗</a></figcaption>
     </figure>
   </section>
 
@@ -292,14 +296,15 @@
     <div class="terminal reveal">
       <div class="terminal-bar"><span></span><span></span><span></span><b>install.sh</b><button id="copy-install" type="button">copy</button></div>
       <pre id="install-code"><code><span class="c-dim"># the layout and its 17 mods</span>
-<span class="c-blue">git</span> clone https://github.com/meviusisback/herdr-gh-board
-<span class="c-blue">cp</span> herdr-gh-board/layouts/repos-and-agents.json \
-   ~/.config/herdr-app/layouts/
-<span class="c-blue">cp</span> -r herdr-gh-board/mods/* ~/.config/herdr-app/mods/
+<span class="c-blue">gh</span> repo clone meviusisback/herdr-gh-board
+<span class="c-blue">cd</span> herdr-gh-board
+<span class="c-blue">cp</span> -r layouts ~/.config/herdr-app/
+<span class="c-blue">cp</span> -r mods ~/.config/herdr-app/
 
 <span class="c-dim"># merge keys.json, then show the layout</span>
-<span class="c-blue">herdr-app</span> do layout.switch <span class="c-green">'{"name":"repos-and-agents"}'</span></code></pre>
-      <div class="terminal-foot"><span class="pulse-dot"></span> applies live · <code>herdr-app check mods/&lt;name&gt;</code> proves each mod</div>
+<span class="c-blue">herdr-app</span> do layout.switch \
+  <span class="c-green">'{"name":"repos-and-agents"}'</span></code></pre>
+      <div class="terminal-foot"><span class="pulse-dot"></span><span>applies live · <code>herdr-app check</code> proves each mod</span></div>
     </div>
   </section>
 

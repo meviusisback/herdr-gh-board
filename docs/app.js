@@ -105,7 +105,7 @@
   if (copy) {
     copy.addEventListener("click", async () => {
       const code = $("#install-code");
-      const text = code ? code.innerText.replace(/\u00a0/g, " ") : "";
+      const text = code ? code.textContent.replace(/\u00a0/g, " ") : "";
       try {
         await navigator.clipboard.writeText(text);
         copy.textContent = "copied";

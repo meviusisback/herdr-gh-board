@@ -1,110 +1,122 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700">
-  <rect width="1200" height="700" fill="#0b0d12"/>
-  <text x="32" y="42" fill="#e8ebf2" font-family="JetBrains Mono" font-size="16" font-weight="600">Wall</text>
-  <text x="84" y="42" fill="#596170" font-family="JetBrains Mono" font-size="12">every running agent, side by side</text>
-  <rect x="1010" y="26" width="158" height="24" rx="12" fill="#8b95a514" stroke="#8b95a533"/>
-  <text x="1024" y="42" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">← back to tabs</text>
-
-  <!-- tile 1 -->
-  <rect x="32" y="72" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="32" y="72" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="50" cy="87" r="4" fill="#6cabdd"/>
-  <text x="62" y="91" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">orbital</text>
-  <text x="134" y="91" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Fix login redirect</text>
-  <text x="384" y="91" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">feat/login</text>
-  <text x="50" y="126" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ omp</text>
-  <text x="50" y="150" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read src/auth/login.ts</text>
-  <text x="50" y="172" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+ await limiter.check(input.email);</text>
-  <text x="50" y="194" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  return session;</text>
-  <text x="50" y="224" fill="#e8912a" font-family="JetBrains Mono" font-size="10.5">● Blocked — needs you</text>
-  <text x="50" y="246" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">Pick a counter store: redis,</text>
-  <text x="50" y="264" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">sqlite, or memory?</text>
-  <rect x="50" y="286" width="236" height="24" rx="5" fill="#1a1e25" stroke="#6d5efc"/>
-  <text x="62" y="302" fill="#e8ebf2" font-family="JetBrains Mono" font-size="10">1. redis   2. sqlite   3. memory</text>
-  <text x="50" y="334" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="62" y="326" width="62" height="10" rx="2" fill="#2b3038"/>
-
-  <!-- tile 2 -->
-  <rect x="416" y="72" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="416" y="72" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="434" cy="87" r="4" fill="#6cabdd"/>
-  <text x="446" y="91" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">ledger</text>
-  <text x="514" y="91" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Stream CSV exports</text>
-  <text x="768" y="91" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">export-csv</text>
-  <text x="434" y="126" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ pi</text>
-  <text x="434" y="150" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read src/export/csv.ts</text>
-  <text x="434" y="172" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  for await (const row of rows) {</text>
-  <text x="434" y="194" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+   await write(row);</text>
-  <text x="434" y="216" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  }</text>
-  <text x="434" y="246" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Edit src/export/csv.ts</text>
-  <text x="434" y="278" fill="#596170" font-family="JetBrains Mono" font-size="10.5">tests 12 passed · 0.8s</text>
-  <text x="434" y="334" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="446" y="326" width="62" height="10" rx="2" fill="#2b3038"/>
-
-  <!-- tile 3 -->
-  <rect x="800" y="72" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="800" y="72" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="818" cy="87" r="4" fill="#e8912a"/>
-  <text x="830" y="91" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">atlas</text>
-  <text x="880" y="91" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Warm the tile cache</text>
-  <text x="1152" y="91" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">main</text>
-  <text x="818" y="126" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ hermes</text>
-  <text x="818" y="150" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read src/tiles/cache.ts</text>
-  <text x="818" y="172" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  const seen = new Map();</text>
-  <text x="818" y="194" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+ await Promise.all(warm(urls));</text>
-  <text x="818" y="216" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  return seen;</text>
-  <text x="818" y="246" fill="#e8912a" font-family="JetBrains Mono" font-size="10.5">● Needs you: 1 flaky test</text>
-  <text x="818" y="268" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  should the cache warm on boot</text>
-  <text x="818" y="286" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  or on the first request?</text>
-  <text x="818" y="334" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="830" y="326" width="62" height="10" rx="2" fill="#2b3038"/>
-
-  <!-- tile 4 -->
-  <rect x="32" y="370" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="32" y="370" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="50" cy="385" r="4" fill="#8fbc6a"/>
-  <text x="62" y="389" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">orbital</text>
-  <text x="134" y="389" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Login flashes on refresh</text>
-  <text x="384" y="389" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">bug/139</text>
-  <text x="50" y="424" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ claude</text>
-  <text x="50" y="448" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read src/auth/session.ts</text>
-  <text x="50" y="470" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  useEffect(() => {</text>
-  <text x="50" y="492" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+   if (!ready) return;</text>
-  <text x="50" y="514" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  }, [ready]);</text>
-  <text x="50" y="544" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">● Done — tests pass</text>
-  <text x="50" y="566" fill="#596170" font-family="JetBrains Mono" font-size="10.5">18 passed · 1.1s</text>
-  <text x="50" y="632" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="62" y="624" width="62" height="10" rx="2" fill="#2b3038"/>
-
-  <!-- tile 5 -->
-  <rect x="416" y="370" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="416" y="370" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="434" cy="385" r="4" fill="#6cabdd"/>
-  <text x="446" y="389" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">scratch</text>
-  <text x="514" y="389" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Prototype the parser</text>
-  <text x="768" y="389" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">main</text>
-  <text x="434" y="424" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ omp</text>
-  <text x="434" y="448" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read grammar.ts</text>
-  <text x="434" y="470" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  type Expr =</text>
-  <text x="434" y="492" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+   | { kind: "call"; fn: Expr }</text>
-  <text x="434" y="514" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  | { kind: "name"; id: string };</text>
-  <text x="434" y="544" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Working on the parser tests</text>
-  <text x="434" y="632" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="446" y="624" width="62" height="10" rx="2" fill="#2b3038"/>
-
-  <!-- tile 6 -->
-  <rect x="800" y="370" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
-  <rect x="800" y="370" width="368" height="30" rx="10" fill="#181b21"/>
-  <circle cx="818" cy="385" r="4" fill="#596170"/>
-  <text x="830" y="389" fill="#e8ebf2" font-family="JetBrains Mono" font-size="11.5" font-weight="600">ledger</text>
-  <text x="898" y="389" fill="#8b95a5" font-family="JetBrains Mono" font-size="11">Round half-even in totals</text>
-  <text x="1152" y="389" fill="#596170" font-family="JetBrains Mono" font-size="10" text-anchor="end">main</text>
-  <text x="818" y="424" fill="#596170" font-family="JetBrains Mono" font-size="10.5">$ hermes</text>
-  <text x="818" y="448" fill="#6cabdd" font-family="JetBrains Mono" font-size="10.5">● Read src/money.ts</text>
-  <text x="818" y="470" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  export const round = (n) =&gt;</text>
-  <text x="818" y="492" fill="#8fbc6a" font-family="JetBrains Mono" font-size="10.5">+   bankersRound(n, 2);</text>
-  <text x="818" y="514" fill="#8b95a5" font-family="JetBrains Mono" font-size="10.5">  // half-even for ledgers</text>
-  <text x="818" y="544" fill="#596170" font-family="JetBrains Mono" font-size="10.5">● Idle — no prompt waiting</text>
-  <text x="818" y="632" fill="#6d5efc" font-family="JetBrains Mono" font-size="11">❯</text>
-  <rect x="830" y="624" width="62" height="10" rx="2" fill="#2b3038"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660">
+  <rect width="1200" height="660" fill="#0b0d12"/>
+  <!-- the wall layout: live agent terminals, no header; the chip that leads back sits in the status row -->
+  <rect x="32" y="24" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="32" y="24" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="50" cy="39" r="4" fill="#e8912a"/>
+  <text x="62" y="43" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">orbital</text>
+  <text x="128" y="43" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Fix login redirect</text>
+  <text x="384" y="43" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">feat/login</text>
+  <text x="50" y="78" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ omp</text>
+  <text x="50" y="96" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read src/auth/login.ts</text>
+  <text x="50" y="114" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+ await limiter.check(input.email);</text>
+  <text x="50" y="132" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  return session;</text>
+  <text x="50" y="168" fill="#e8912a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Blocked — needs you</text>
+  <text x="50" y="186" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">Pick a counter store: redis,</text>
+  <text x="50" y="204" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">sqlite, or memory?</text>
+  <rect x="50" y="248" width="260" height="24" rx="5" fill="#1a1e25" stroke="#6d5efc"/>
+  <text x="62" y="264" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" xml:space="preserve">1. redis   2. sqlite   3. memory</text>
+  <text x="50" y="290" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="62" y="282" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="416" y="24" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="416" y="24" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="434" cy="39" r="4" fill="#6cabdd"/>
+  <text x="446" y="43" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">ledger</text>
+  <text x="512" y="43" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Stream CSV exports</text>
+  <text x="768" y="43" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">export-csv</text>
+  <text x="434" y="78" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ pi</text>
+  <text x="434" y="96" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read src/export/csv.ts</text>
+  <text x="434" y="114" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  for await (const row of rows) {</text>
+  <text x="434" y="132" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+   await write(row);</text>
+  <text x="434" y="150" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  }</text>
+  <text x="434" y="168" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Edit src/export/csv.ts</text>
+  <text x="434" y="186" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">tests 12 passed · 0.8s</text>
+  <text x="434" y="290" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="446" y="282" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="800" y="24" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="800" y="24" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="818" cy="39" r="4" fill="#e8912a"/>
+  <text x="830" y="43" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">atlas</text>
+  <text x="896" y="43" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Warm the tile cache</text>
+  <text x="1152" y="43" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">main</text>
+  <text x="818" y="78" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ hermes</text>
+  <text x="818" y="96" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read src/tiles/cache.ts</text>
+  <text x="818" y="114" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  const seen = new Map();</text>
+  <text x="818" y="132" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+ await Promise.all(warm(urls));</text>
+  <text x="818" y="150" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  return seen;</text>
+  <text x="818" y="168" fill="#e8912a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Needs you: 1 flaky test</text>
+  <text x="818" y="186" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">should the cache warm on boot</text>
+  <text x="818" y="204" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">or on the first request?</text>
+  <text x="818" y="290" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="830" y="282" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="32" y="322" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="32" y="322" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="50" cy="337" r="4" fill="#8fbc6a"/>
+  <text x="62" y="341" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">orbital</text>
+  <text x="128" y="341" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Login flashes on refresh</text>
+  <text x="384" y="341" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">bug/139</text>
+  <text x="50" y="376" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ claude</text>
+  <text x="50" y="394" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read src/auth/session.ts</text>
+  <text x="50" y="412" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  useEffect(() => {</text>
+  <text x="50" y="430" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+   if (!ready) return;</text>
+  <text x="50" y="448" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  }, [ready]);</text>
+  <text x="50" y="466" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Done — tests pass</text>
+  <text x="50" y="484" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">18 passed · 1.1s</text>
+  <text x="50" y="588" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="62" y="580" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="416" y="322" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="416" y="322" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="434" cy="337" r="4" fill="#6cabdd"/>
+  <text x="446" y="341" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">scratch</text>
+  <text x="512" y="341" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Prototype the parser</text>
+  <text x="768" y="341" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">main</text>
+  <text x="434" y="376" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ omp</text>
+  <text x="434" y="394" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read grammar.ts</text>
+  <text x="434" y="412" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  type Expr =</text>
+  <text x="434" y="430" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+   | { kind: "call"; fn: Expr }</text>
+  <text x="434" y="448" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  | { kind: "name"; id: string };</text>
+  <text x="434" y="466" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Working on the parser tests</text>
+  <text x="434" y="588" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="446" y="580" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="800" y="322" width="368" height="282" rx="10" fill="#101318" stroke="#252b34"/>
+  <rect x="800" y="322" width="368" height="30" rx="10" fill="#181b21"/>
+  <circle cx="818" cy="337" r="4" fill="#596170"/>
+  <text x="830" y="341" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11.5" font-weight="600">ledger</text>
+  <text x="896" y="341" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">Round half-even in totals</text>
+  <text x="1152" y="341" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10" text-anchor="end">main</text>
+  <text x="818" y="376" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">$ hermes</text>
+  <text x="818" y="394" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Read src/money.ts</text>
+  <text x="818" y="412" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  export const round = (n) =></text>
+  <text x="818" y="430" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">+   bankersRound(n, 2);</text>
+  <text x="818" y="448" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">  // half-even for ledgers</text>
+  <text x="818" y="466" fill="#596170" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">● Idle — no prompt waiting</text>
+  <text x="818" y="588" fill="#6d5efc" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">❯</text>
+  <rect x="830" y="580" width="62" height="10" rx="2" fill="#2b3038"/>
+  <rect x="0" y="620" width="1200" height="40" fill="#15181d"/>
+  <rect x="0" y="620" width="1200" height="1" fill="#252b34"/>
+  <rect x="16" y="633" width="12" height="12" rx="3" fill="#2b3038"/>
+  <text x="36" y="644" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12">This computer</text>
+  <rect x="160" y="633" width="12" height="12" rx="3" fill="#2b3038"/>
+  <text x="180" y="644" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12">orbital</text>
+  <text x="240" y="644" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="12">feat/login</text>
+  <rect x="560" y="629" width="220" height="24" rx="12" fill="#15181d" stroke="#252b34"/>
+  <text x="576" y="645" fill="#e8ebf2" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">▦</text>
+  <text x="596" y="645" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">6</text>
+  <rect x="616" y="634" width="1" height="14" fill="#252b34"/>
+  <circle cx="632" cy="641" r="4" fill="#e8912a"/>
+  <text x="644" y="645" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="11">4 active</text>
+  <rect x="790" y="630" width="78" height="22" rx="11" fill="#e8912a" fill-opacity=".12" stroke="#e8912a" stroke-opacity=".35"/>
+  <circle cx="802" cy="641" r="3" fill="#e8912a"/>
+  <text x="810" y="645" fill="#e8912a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">2 blocked</text>
+  <rect x="874" y="630" width="84" height="22" rx="11" fill="#6cabdd" fill-opacity=".12" stroke="#6cabdd" stroke-opacity=".35"/>
+  <circle cx="886" cy="641" r="3" fill="#6cabdd"/>
+  <text x="894" y="645" fill="#6cabdd" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">2 working</text>
+  <rect x="964" y="630" width="64" height="22" rx="11" fill="#8fbc6a" fill-opacity=".12" stroke="#8fbc6a" stroke-opacity=".35"/>
+  <circle cx="976" cy="641" r="3" fill="#8fbc6a"/>
+  <text x="984" y="645" fill="#8fbc6a" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">1 done</text>
+  <rect x="1034" y="630" width="58" height="22" rx="11" fill="#8b95a5" fill-opacity=".12" stroke="#8b95a5" stroke-opacity=".3"/>
+  <circle cx="1046" cy="641" r="3" fill="#8b95a5"/>
+  <text x="1054" y="645" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">1 idle</text>
+  <rect x="1098" y="630" width="64" height="22" rx="11" fill="#8b95a5" fill-opacity=".08" stroke="#8b95a5" stroke-opacity=".2"/>
+  <text x="1106" y="645" fill="#8b95a5" font-family="JetBrains Mono, ui-monospace, monospace" font-size="10.5">6 total</text>
 </svg>
