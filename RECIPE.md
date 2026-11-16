@@ -3,12 +3,12 @@
 A Herdr window built around the repos you keep in one folder. The sidebar is a tree — repo →
 its main checkout, branches and worktrees → the agents in each — with each level's git distance
 and each agent's state as chips; the middle is the shown tab's panes, their header naming the
-thread each agent is working on; the right column is one git panel with three views (Trees,
+thread each agent is working on; the right column holds Changes, Files and one git panel with three views (Trees,
 Commits, Issues); the bottom bar says what the agents on screen share and how far it is from
 origin; and a wall shows the running agents side by side without moving anything out of its
 space.
 
-![Repos & Agents](preview.png?v=20261116e)
+![Repos & Agents](preview.png?v=20261116f)
 
 ## What you see
 
