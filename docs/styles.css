@@ -449,6 +449,7 @@ footer nav { display: flex; flex-wrap: wrap; gap: 18px; margin-left: auto; }
 footer a { color: var(--muted); transition: color .2s; }
 footer a:hover { color: var(--fg); }
 footer p { flex-basis: 100%; margin: 0; }
+.site-version { margin-left: 8px; color: var(--dim); font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
