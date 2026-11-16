@@ -1,7 +1,8 @@
-// The last prompt an agent received, read from the agent's own store: the same sources the
-// pane header uses (pi, omp, opencode, hermes). The sidebar has no screen of its own, so it
-// always shows the last sent prompt rather than the one the terminal has scrolled to.
-// Remote agents have no store here: their address names a machine, and the read returns "".
+// The last prompts an agent received, read from the agent's own store: the same sources the
+// pane header uses (pi, omp, opencode, hermes). One prompt feeds the row (the fallback when no
+// generated title is ready); the last few feed the title generator, so a title follows the
+// thread rather than only its first message. Remote agents have no store here: the read
+// returns nothing.
 
 import { home, exec, terminals } from "herdr";
 
@@ -20,6 +21,8 @@ const flat = (s) => plain(s).replace(/\s+/g, " ").trim();
 
 // A session id or a folder in a query: text is never trusted to close the quotes itself.
 const sqlText = (value) => String(value ?? "").replace(/'/g, "''");
+
+const countOf = (limit) => Math.max(1, Math.min(20, Number(limit) || 1));
 
 // One query, as rows of tab-separated fields. Field separators become spaces in the SQL, so a
 // prompt's own tabs cannot split its row.
@@ -51,12 +54,15 @@ function asked(text) {
   return rest && !rest.startsWith("<") ? rest : "";
 }
 
-// The newest user message inside the last `bytes` of the file, or "" when there is none there.
-async function scanTail(file, bytes) {
+// The newest user messages inside the last `bytes` of the file, newest first, and whether the
+// window reached the start of the file (in which case a wider one has nothing more to find).
+async function scanTail(file, bytes, count) {
   const text = await tail(file, bytes);
-  if (!text.includes('"role":"user"')) return "";
+  const atStart = text.length < bytes;
+  if (!text.includes('"role":"user"')) return { found: [], atStart };
+  const found = [];
   const lines = text.split("\n");
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
+  for (let i = lines.length - 1; i >= 0 && found.length < count; i -= 1) {
     const line = lines[i];
     if (!line.includes('"role":"user"')) continue;
     let entry;
@@ -66,9 +72,9 @@ async function scanTail(file, bytes) {
     const prompt = flat(parts.filter((b) => b?.type === "text").map((b) => b.text).join(" "));
     const what = asked(prompt);
     if (!what) continue;
-    return what;
+    found.push(what);
   }
-  return "";
+  return { found, atStart };
 }
 
 // The map itself changes only when a pi session starts or ends: read it at most this often,
@@ -81,20 +87,36 @@ let PI_CACHE = { at: 0, map: null };
 const WIN_MEMO = new Map();
 const WIN_MEMO_MAX = 100;
 
-// The last thing the person typed into a pi session: the newest user message in its log.
-async function lastUserMessage(file) {
+function rememberWindow(file, window) {
+  if (WIN_MEMO.get(file) === window) return;
+  if (WIN_MEMO.size >= WIN_MEMO_MAX && !WIN_MEMO.has(file)) WIN_MEMO.delete(WIN_MEMO.keys().next().value);
+  WIN_MEMO.set(file, window);
+}
+
+// The last `count` things the person typed into a pi session, newest first: the newest user
+// messages in its log. A window that holds fewer than asked widens until the log's start or
+// the widest window; the window that finds the most is kept for the next read.
+async function lastUserMessages(file, count) {
   const memo = WIN_MEMO.get(file);
   const order = memo ? [memo, ...WINDOWS.filter((window) => window !== memo)] : WINDOWS;
+  let best = [];
+  let bestWindow = memo ?? WINDOWS[0];
   for (const window of order) {
-    const found = await scanTail(file, window);
-    if (!found) continue;
-    if (memo !== window) {
-      if (WIN_MEMO.size >= WIN_MEMO_MAX && !WIN_MEMO.has(file)) WIN_MEMO.delete(WIN_MEMO.keys().next().value);
-      WIN_MEMO.set(file, window);
+    const { found, atStart } = await scanTail(file, window, count);
+    if (found.length > best.length) {
+      best = found;
+      bestWindow = window;
     }
-    return found;
+    if (found.length >= count) {
+      rememberWindow(file, window);
+      return found;
+    }
+    // A window that reached the file's start saw every message there is: widening would only
+    // read the same bytes again.
+    if (atStart) break;
   }
-  return "";
+  if (best.length) rememberWindow(file, bestWindow);
+  return best;
 }
 
 // The extension's pid -> session map, read through the memo above.
@@ -107,78 +129,110 @@ async function piSessions() {
   return PI_CACHE.map ?? {};
 }
 
-// pi: pid -> session file (the extension's map), then the last user message in it.
-async function piPrompt(p) {
+// pi: pid -> session file (the extension's map), then the last user messages in it.
+async function piThread(p, limit) {
   const rec = (terminals() ?? []).find((t) => t.address === p.terminal) ?? {};
   const pid = rec.foreground?.pid ?? rec.pid ?? null;
-  if (!pid) return "";
+  if (!pid) return { session: "", prompts: [], recap: "" };
   const map = await piSessions();
   const file = map?.[String(pid)]?.path;
   // The map is a local JSON file: a path it names is read only when it is an absolute path.
-  return typeof file === "string" && file.startsWith("/") ? lastUserMessage(file) : "";
+  if (typeof file !== "string" || !file.startsWith("/")) return { session: "", prompts: [], recap: "" };
+  return { session: file, prompts: await lastUserMessages(file, limit), recap: "" };
 }
 
 // omp: history.db keeps every prompt with the session it was sent to, and that session is the
 // one whose title the terminal shows. The title is matched whole, never as a LIKE pattern: a
-// short or unrelated title must not reach another session's prompts.
-async function ompPrompt(p) {
+// short or unrelated title must not reach another session's prompts. Its latest recap is the
+// agent's own note on where the work stands, and helps a title name the goal rather than a step.
+async function ompThread(p, limit) {
   const file = `${home()}/.omp/agent/history.db`;
   const term = plain(p.title);
   const session = (await query(file, "SELECT session_id, title FROM session_titles ORDER BY updated_at DESC LIMIT 200;"))
     .find(([, title]) => title && term.includes(plain(title)));
-  if (!session) return "";
+  if (!session) return { session: "", prompts: [], recap: "" };
   const prompts = await query(file,
     `SELECT replace(replace(prompt, char(10), ' '), char(9), ' ') FROM history
-      WHERE session_id = '${sqlText(session[0])}' ORDER BY created_at DESC LIMIT 15;`);
-  return prompts.map(([prompt]) => flat(prompt)).filter(Boolean)[0] ?? "";
+      WHERE session_id = '${sqlText(session[0])}' ORDER BY created_at DESC LIMIT ${countOf(limit)};`);
+  // Older OMP stores have no recaps table; a title is still worth reading from the prompts.
+  let recap = "";
+  try {
+    const rows = await query(file,
+      `SELECT replace(replace(recap, char(10), ' '), char(9), ' ') FROM session_recaps
+        WHERE session_id = '${sqlText(session[0])}' ORDER BY created_at DESC LIMIT 1;`);
+    recap = flat(rows[0]?.[0] ?? "");
+  } catch { /* no recaps in this store */ }
+  return {
+    session: `omp:${session[0]}`,
+    prompts: prompts.map(([prompt]) => flat(prompt)).filter(Boolean),
+    recap,
+  };
 }
 
 // opencode: its own sqlite file, the session for this folder whose title the terminal shows,
 // and the person's own messages in it.
-async function opencodePrompt(p) {
+async function opencodeThread(p, limit) {
   const file = `${home()}/.local/share/opencode/opencode.db`;
   const term = plain(p.title);
   const session = (await query(file,
     `SELECT id, title FROM session_v2 WHERE directory = '${sqlText(p.cwd)}' AND title IS NOT NULL
       ORDER BY time_updated DESC LIMIT 100;`))
     .find(([, title]) => title && term.includes(plain(title)));
-  if (!session) return "";
+  if (!session) return { session: "", prompts: [], recap: "" };
   const prompts = await query(file,
     `SELECT replace(replace(json_extract(data, '$.text'), char(10), ' '), char(9), ' ') FROM session_message
-      WHERE session_id = '${sqlText(session[0])}' AND type = 'user' ORDER BY seq DESC LIMIT 15;`);
-  return prompts.map(([text]) => flat(text)).filter(Boolean)[0] ?? "";
+      WHERE session_id = '${sqlText(session[0])}' AND type = 'user' ORDER BY seq DESC LIMIT ${countOf(limit)};`);
+  return {
+    session: `opencode:${session[0]}`,
+    prompts: prompts.map(([text]) => flat(text)).filter(Boolean),
+    recap: "",
+  };
 }
 
 // hermes: its terminal title is empty and its store keeps no pid, so the session is the one
 // live local session for the folder. Two of them, or none, means no prompt: a guess is how a
 // row ends up showing what another session was asked.
-async function hermesPrompt(p) {
+async function hermesThread(p, limit) {
   const file = `${home()}/.hermes/state.db`;
   const live = await query(file,
-    `SELECT id FROM sessions WHERE source = 'local' AND ended_at IS NULL AND cwd = '${sqlText(p.cwd)}'
+    `SELECT id FROM sessions
+      WHERE source = 'local' AND ended_at IS NULL AND cwd = '${sqlText(p.cwd)}'
       ORDER BY last_activity_at DESC LIMIT 2;`);
-  if (live.length !== 1) return "";
+  if (live.length !== 1) return { session: "", prompts: [], recap: "" };
   const prompts = await query(file,
     `SELECT replace(replace(content, char(10), ' '), char(9), ' ') FROM messages
       WHERE session_id = '${sqlText(live[0][0])}' AND role = 'user' AND active = 1
-      ORDER BY timestamp DESC LIMIT 15;`);
+      ORDER BY timestamp DESC LIMIT ${countOf(limit)};`);
+  let recap = "";
+  try {
+    const rows = await query(file,
+      `SELECT coalesce(last_activity_description, '') FROM sessions WHERE id = '${sqlText(live[0][0])}' LIMIT 1;`);
+    recap = flat(rows[0]?.[0] ?? "");
+  } catch { /* older store without the column */ }
   // Background work, delegated batches and skill invocations arrive as user messages too.
-  return prompts.map(([text]) => flat(text)).filter((text) => text && !/^[\[<]/.test(text))[0] ?? "";
+  return {
+    session: `hermes:${live[0][0]}`,
+    prompts: prompts.map(([text]) => flat(text)).filter((text) => text && !/^[\[<]/.test(text)),
+    recap,
+  };
 }
 
 // The agents whose own store answers "what was asked here". One not here shows nothing: a
 // title matched against another agent's history is how a row shows a prompt nobody sent.
-const SOURCES = { omp: ompPrompt, opencode: opencodePrompt, hermes: hermesPrompt };
+const SOURCES = { omp: ompThread, opencode: opencodeThread, hermes: hermesThread };
 
 /** Whether this agent's prompt can be read here. */
 export function readable(app) {
   return app === "pi" || Boolean(SOURCES[app]);
 }
 
-/** The last prompt of an agent (`agents()` entry) whose pane is in `cwd`, or "". */
-export async function lastPrompt(agent, cwd) {
-  if (!agent || String(agent.address ?? "").includes("/")) return "";
-  const read = agent.app === "pi" ? piPrompt : SOURCES[agent.app];
-  if (!read) return "";
-  return read({ terminal: agent.address, title: agent.title, cwd, app: agent.app });
+/** The last `limit` prompts of an agent (`agents()` entry) whose pane is in `cwd`, newest
+ *  first, with the session they belong to and the agent's latest recap when its store has
+ *  one. `{ session: "", prompts: [], recap: "" }` when nothing can be read here. */
+export async function threadPrompts(agent, cwd, limit = 8) {
+  const empty = { session: "", prompts: [], recap: "" };
+  if (!agent || String(agent.address ?? "").includes("/")) return empty;
+  const read = agent.app === "pi" ? piThread : SOURCES[agent.app];
+  if (!read) return empty;
+  return read({ terminal: agent.address, title: agent.title, cwd, app: agent.app }, countOf(limit));
 }

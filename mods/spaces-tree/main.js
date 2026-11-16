@@ -1,7 +1,9 @@
 import { View, div, svg, image } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input, Popover, Popup } from "gpui-base";
 import { spaces, agents, panes, theme, settings, run, exec, hc, home, shared, setShared, openOverlay, closeOverlay, nextCommand, notify, setAgentOrder, layout } from "herdr";
-import { readable, lastPrompt } from "./last-prompt.js";
+import { readable, threadPrompts } from "./last-prompt.js";
+import { generateTitle } from "./titles.js";
+import { threadKey } from "./title-text.js";
 import { lastModel } from "./agent-model.js";
 import { brandOf, inkOn, readOn, splitModel } from "./model-brand.js";
 import * as fs from "fs/promises";
@@ -76,6 +78,22 @@ const pushable = (ref) => {
 };
 // What an agent is called on screen: its program, else what runs it, else its tab.
 const nameOf = (agent) => plain(agent.program?.name || agent.app || agent.tab_name || "terminal");
+
+// What an agent's terminal says it is doing, for an agent whose store this mod cannot read (or
+// before its first title is written). OMP puts a short all-caps kicker before its own title
+// ("TITLE: ..."); the row does not need it. Paths and bare program names are not titles.
+const nativeTitle = (agent) => {
+  let text = plain(agent.title).trim();
+  // OMP prefixes its title with its own mark, then a status spinner; Codex marks its state in
+  // brackets. Neither names the thread, and neither should reach the row.
+  text = text.replace(/^\u03c0\s+/, "").replace(/^\[ [!.] \]\s*/, "");
+  text = text.replace(/^[^\p{L}\p{N}\p{Ps}\p{Pi}]+/u, "").trim();
+  text = text.replace(/^[A-Z0-9]{2,8}:\s*/, "");
+  const bare = [agent.program?.name, agent.program?.key, agent.address, agent.title]
+    .map((value) => plain(value).trim().toLowerCase());
+  if (!text || bare.includes(text.toLowerCase()) || /^([~/]|[A-Za-z]:\\)/.test(text)) return "";
+  return text;
+};
 
 // The wall's layout and the blocks it builds one per agent: `wall-term-<address>` (see
 // mods/agent-wall). A row is marked only for one of these, and only while that layout shows.
@@ -192,7 +210,11 @@ export default class SpacesTree extends View {
     // record saying one is up is stale, and must not eat the first press.
     if (shared(BRANCH_MENU)) setShared(BRANCH_MENU, null);
     this.prompts = {}; // agent address -> { prompt, at }: what that agent was last asked
+    this.threads = {}; // agent address -> { session, prompts, recap }: the thread behind it
     this.asking = new Set(); // agent addresses whose store is being read now
+    this.titleJobs = new Map(); // agent address -> { key, thread, at }: title work waiting
+    this.titleBusy = null; // the agent address whose title is being written now
+    this.titleFailed = {}; // agent address -> key: a prompt set no generator answered
     this.subs = {}; // agent address -> { list, at }: the subagent records its terminal carries
     this.askingSubs = new Set(); // agent addresses whose records are being read now
     this.card = ""; // the agent address whose card is open under the pointer, if any
@@ -1655,8 +1677,9 @@ export default class SpacesTree extends View {
     run("agent-wall.pair");
   }
 
-  // The last prompt each agent received, from its own store, asked at most every 10 s per
-  // agent. Never blocks a render; a store that fails keeps the prompt it had.
+  // The last prompts each agent received, from its own store, asked at most every 10 s per
+  // agent. Never blocks a render; a store that fails keeps what it had. A changed set of
+  // prompts is also the signal that the thread's title may be out of date.
   refreshPrompts(cx) {
     const now = Date.now();
     // One pane lookup per refresh, not one per agent.
@@ -1669,14 +1692,93 @@ export default class SpacesTree extends View {
       const cwd = paneById.get(agent.pane)?.cwd ?? null;
       this.asking.add(agent.address);
       cx.spawn(async (cx) => {
-        let prompt = this.prompts[agent.address]?.prompt ?? "";
-        try { prompt = await lastPrompt(agent, cwd); } catch { /* keep the last one */ }
+        let thread = this.threads[agent.address] ?? null;
+        try { thread = await threadPrompts(agent, cwd, 8); } catch { /* keep the last one */ }
+        const prompt = thread?.prompts[0] ?? "";
         this.prompts[agent.address] = { prompt, at: Date.now() };
+        if (thread?.prompts.length) {
+          this.threads[agent.address] = thread;
+          this.considerTitle(agent, thread, cx);
+        }
         this.asking.delete(agent.address);
         // An unchanged prompt is a fresh timestamp, not a reason to redraw the window.
         if (prompt !== (seen?.prompt ?? "")) this.redraw(cx);
       });
     }
+  }
+
+  // The title generated for an agent's thread, when one is ready.
+  titleOf(address) {
+    const titles = this.titlesNow ?? shared("thread-titles");
+    const found = titles && typeof titles === "object" ? titles[address] : null;
+    return found && typeof found.title === "string" ? found.title : "";
+  }
+
+  // Queue a title when the prompts changed. One generator call runs at a time: a title is a
+  // background label, and a burst of prompts in several agents must not become a burst of
+  // model requests. A newer prompt for an agent already waiting replaces its older job.
+  considerTitle(agent, thread, cx) {
+    const key = threadKey(thread);
+    const titles = shared("thread-titles");
+    const seen = titles && typeof titles === "object" ? titles[agent.address] : null;
+    if (seen?.key === key) return;
+    if (this.titleFailed[agent.address] === key) return;
+    if (this.titleBusy === agent.address && this.titleBusyKey === key) return;
+    const waiting = this.titleJobs.get(agent.address);
+    if (waiting?.key === key) return;
+    this.titleJobs.set(agent.address, { key, thread, at: Date.now() });
+    this.pumpTitles(cx);
+  }
+
+  // Write the next queued title. The request is checked again at run time: the shared state or
+  // the agent's prompts may have moved on while other titles were being written.
+  pumpTitles(cx) {
+    if (this.titleBusy || this.titleJobs.size === 0) return;
+    const [address, job] = this.titleJobs.entries().next().value;
+    this.titleJobs.delete(address);
+    const agent = agents().find((a) => a.address === address);
+    if (!agent) { this.pumpTitles(cx); return; }
+    const titles = shared("thread-titles");
+    const now = titles && typeof titles === "object" ? titles[address] : null;
+    if (now?.key === job.key) { this.pumpTitles(cx); return; }
+    this.titleBusy = address;
+    this.titleBusyKey = job.key;
+    cx.spawn(async (cx) => {
+      let title = "";
+      try {
+        const pane = panes().find((p) => p.pane === agent.pane);
+        title = await generateTitle({
+          agentName: agent.program?.name || agent.app || "",
+          folder: pane?.cwd ?? "",
+          prompts: job.thread.prompts,
+          recap: job.thread.recap ?? "",
+          previous: now?.title ?? "",
+        });
+      } catch { title = ""; }
+      this.titleBusy = null;
+      this.titleBusyKey = "";
+      if (title) {
+        const all = { ...(shared("thread-titles") ?? {}) };
+        const before = all[address];
+        if (!before || before.title !== title || before.key !== job.key) {
+          all[address] = { title, key: job.key, at: Date.now(), session: job.thread.session ?? "" };
+          // A title nobody has refreshed in a month belongs to no live thread here.
+          for (const [key, value] of Object.entries(all)) {
+            if (key !== address && Date.now() - Number(value?.at ?? 0) > 30 * 24 * 3600 * 1000) delete all[key];
+          }
+          setShared("thread-titles", all);
+        }
+      } else {
+        // Do not ask again for the same prompts on every poll; a new prompt tries again.
+        this.titleFailed[address] = job.key;
+      }
+      // Prompts that landed while this title was written are still owed one.
+      const latest = this.threads[address];
+      const current = (shared("thread-titles") ?? {})[address];
+      if (latest && threadKey(latest) !== (current?.key ?? "")) this.considerTitle(agent, latest, cx);
+      cx.notify();
+      this.pumpTitles(cx);
+    });
   }
 
   // The subagents a terminal runs, as its own records name them: pi-subagents writes one per job
@@ -1806,6 +1908,7 @@ export default class SpacesTree extends View {
     const brand = tile ?? t.accent;
     const pane = panes().find((p) => p.pane === agent.pane) ?? null;
     const said = this.prompts?.[agent.address]?.prompt ?? "";
+    const title = this.titleOf(agent.address) || nativeTitle(agent);
     const [model, effort] = (this.models?.[agent.address]?.text ?? "").split(" \u00b7 ");
     // The family the model's name belongs to, and which of its words is the family rather than
     // the version: the card draws the provider's mark first and the name after it.
@@ -1892,7 +1995,7 @@ export default class SpacesTree extends View {
           .child(v_flex().flex_1().min_w(0).gap(2)
             .child(h_flex().gap(7).items_center()
               .child(div().min_w(0).truncate().font_family(ui).text_size(19).font_semibold()
-                .text_color(t.foreground).child(name))
+                .text_color(t.foreground).child(title || name))
               .when(agent.pinned, (el) => el.child(div().flex_none().font_family(ui).text_size(10.5)
                 .font_semibold().text_color(t.accent).child("PINNED"))))
             .child(h_flex().gap(5).items_center()
@@ -2015,6 +2118,12 @@ export default class SpacesTree extends View {
     const name = nameOf(agent);
     const prompt = this.prompts[agent.address]?.prompt ?? "";
     const said = prompt && prompt !== name ? prompt : "";
+    // The logo already says which agent this is, so the row names the work: the generated (or
+    // terminal's own) title, then the last thing the person asked. A thread with no title yet
+    // leads with that prompt instead; the name is only a last resort.
+    const title = this.titleOf(agent.address) || nativeTitle(agent);
+    const headline = title || said || plain(agent.tab_name || agent.address || name);
+    const sub = title && said ? said : "";
     const onWall = Boolean(this.wall?.has(agent.address));
     const lit = agent.focused || onWall;
     // The program's own tile and glyph color when it has one: the row is recognized by the
@@ -2023,7 +2132,7 @@ export default class SpacesTree extends View {
     const ink = program.color || (tile ? "#ffffff" : t.foreground);
     // The row's tooltip became the card, prompt and pairing included: two surfaces over one
     // row would fight for the pointer.
-    const row = h_flex().id(`a-${agent.address}`).h(said ? 38 : 30).flex_none().pl(10).pr(8).gap(8).items_center()
+    const row = h_flex().id(`a-${agent.address}`).h(sub ? 38 : 30).flex_none().pl(10).pr(8).gap(8).items_center()
       .border_l(2).border_color(lit ? t.accent : alpha(t.accent, "00"))
       .rounded(7).cursor_pointer()
       .when(agent.focused, (el) => el.bg(alpha(t.accent, "1c")))
@@ -2041,10 +2150,10 @@ export default class SpacesTree extends View {
           .child(INITIALS(name)))))
       .child(v_flex().flex_1().min_w(0).gap(1)
         .child(div().truncate().text_size(13).font_medium()
-          .text_color(lit ? t.foreground : t.muted).child(name))
-        .when(Boolean(said), (el) => el.child(h_flex().min_w(0).gap(3).items_center()
+          .text_color(lit ? t.foreground : t.muted).child(headline))
+        .when(Boolean(sub), (el) => el.child(h_flex().min_w(0).gap(3).items_center()
           .child(div().flex_none().text_size(10.5).text_color(t.accent).child("\u276f"))
-          .child(div().min_w(0).truncate().text_size(10.5).text_color(t.muted).child(said)))))
+          .child(div().min_w(0).truncate().text_size(10.5).text_color(t.muted).child(sub)))))
       .when(agent.pinned, (el) => el.child(h_flex().h(17).px(5).flex_none().items_center().rounded(5)
         .bg(t.raised).child(div().text_size(11).text_color(t.muted).child("pinned"))))
       .child(h_flex().id(`pair-${agent.address}`).size(18).flex_none().items_center().justify_center().rounded(5)
@@ -2228,6 +2337,8 @@ export default class SpacesTree extends View {
 
   render() {
     const t = theme();
+    // One read of the titles map for the whole frame: every row and card looks up the same copy.
+    this.titlesNow = shared("thread-titles") ?? {};
     const prefs = this.prefs();
     const { sort, only } = prefs;
     const groups = this.tree(prefs);

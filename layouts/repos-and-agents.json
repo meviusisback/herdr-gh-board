@@ -62,35 +62,14 @@
    "type": "column",
    "children": [
     {
-     "id": "tabs-bar",
-     "type": "row",
+     "id": "wall-chip",
+     "type": "block",
      "size": {
-      "px": 42
+      "px": 0
      },
-     "children": [
-      {
-       "id": "tabs",
-       "type": "block",
-       "size": {
-        "weight": 1
-       },
-       "window_drag": true,
-       "content": {
-        "mod": "tabs-gh"
-       }
-      },
-      {
-       "id": "wall-chip",
-       "type": "block",
-       "size": {
-        "px": 0
-       },
-       "content": {
-        "mod": "agent-wall"
-       }
-      }
-     ],
-     "resizable": false
+     "content": {
+      "mod": "agent-wall"
+     }
     },
     {
      "id": "work-body",
@@ -107,7 +86,7 @@
            "mod": "pane-prompt"
           },
           "reveal": "always",
-          "height": 30,
+          "height": 42,
           "position": "top"
          },
          "background": "background",
@@ -129,6 +108,16 @@
        "id": "panel",
        "type": "column",
        "children": [
+        {
+         "id": "tools",
+         "type": "block",
+         "size": {
+          "px": 42
+         },
+         "content": {
+          "mod": "tabs-gh"
+         }
+        },
         {
          "id": "panel-body",
          "type": "stack",

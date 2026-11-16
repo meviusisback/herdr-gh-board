@@ -1,13 +1,13 @@
 // "Wall": a layout of its own (layouts/agent-wall.json) that shows the live terminals
 // of the agents already running, across spaces, side by side. Nothing is moved: each
 // agent stays in its space, and the layout you came from is never edited — switching
-// back is all it takes. The chip at the tab strip's right end (drawn by `tabs-gh`, which
-// sends this mod the same command the key does) says which agents the wall holds and
-// flips between the two views; the layout's `wall-chip` block is a 0 px mount that keeps
-// a copy of this mod alive for that command. The set it shows is remembered. The wall is a
-// view of the world, not a place to work: picking a tab, an agent or a space leaves it for
-// that pick, whether the pick comes from a mod's click or straight from a key. The file is
-// rewritten whenever agents come and go (their addresses die with a restart).
+// back is all it takes. The status chips at the bottom right (drawn by `agents-status`)
+// send this mod the same commands the key does, and open either wall; the layout's
+// `wall-chip` block is a 0 px mount that keeps a copy of this mod alive for that command.
+// The set it shows is remembered. The wall is a view of the world, not a place to work:
+// picking a tab, an agent or a space leaves it for that pick, whether the pick comes from
+// a mod's click or straight from a key. The file is rewritten whenever agents come and go
+// (their addresses die with a restart).
 
 import { View, div, svg, image } from "gpui-kit";
 import { h_flex } from "gpui-base";
@@ -41,11 +41,12 @@ const plain = (value) => String(value ?? "").replace(/[\u0000-\u001f\u007f-\u009
 // The chip's block, for a layout that has no top bar to hold it.
 const CHIP = () => ({ id: "wall-chip", type: "block", size: { px: 132 }, padding: [7, 0], content: { mod: NAME } });
 
-// Does this tree already hold the chip? Then nothing is added: the top bar's layout has
-// its own, and a second one would draw the same chip twice.
+// Does this tree already draw the chip? A 0 px block is only a mount: the pane header
+// draws the chip in the layout it belongs to, but a wall has no header, so it still needs
+// a visible one (the status row below).
 function hasChip(node) {
   if (!node || typeof node !== "object") return false;
-  if (node.content?.mod === NAME) return true;
+  if (node.content?.mod === NAME && node.size?.px !== 0) return true;
   return [...(node.children ?? []), ...(node.floating ?? [])].some(hasChip);
 }
 
@@ -189,8 +190,8 @@ export default class AgentWall extends View {
     if (!this.once()) return;
     if (shared(ON) && shared(MODE) === "active") { this.off(cx); return; }
     const list = activeAddresses(agents());
-    if (list.length < 2) {
-      notify({ title: "Wall", body: list.length ? "One agent is working: an active wall needs two" : "No agent is working or blocked", level: "info" });
+    if (!list.length) {
+      notify({ title: "Wall", body: "No agent is working or blocked", level: "info" });
       return;
     }
     // The list first: the mode alone would be a filter with nothing frozen, and a
@@ -296,9 +297,10 @@ export default class AgentWall extends View {
       setShared(MODE, null);
     }
     const list = chose.set;
-    if (list.length < 2) {
-      // A wall of one is not a wall: say why when nothing is showing, and never leave one
-      // on screen (its chip would be the only way out, and it would be a wall of one).
+    // A single working or blocked agent is still a useful active wall; the all view keeps
+    // needing two, so nothing opens a pointless wall of one by accident.
+    const oneActive = shared(MODE) === "active" && list.length === 1;
+    if (list.length < 2 && !oneActive) {
       if (shared(ON)) { this.off(cx); return; }
       notify({ title: "Wall", body: list.length ? "One agent is running: a wall needs two" : "No agent is running", level: "info" });
       return;
@@ -312,7 +314,7 @@ export default class AgentWall extends View {
     if (Array.isArray(chosen)) {
       const wanted = new Set(list.map((a) => a.address));
       const kept = [...new Set(chosen)].filter((address) => wanted.has(address));
-      if (kept.length < 2) {
+      if (kept.length < 2 && !(key === FEAT && kept.length === 1)) {
         setShared(key, null);
         if (key === FEAT) setShared(MODE, null);
       } else if (kept.join() !== chosen.join()) setShared(key, kept);

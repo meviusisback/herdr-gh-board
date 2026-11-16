@@ -2,15 +2,17 @@
 //   { "tab": "active", "pane": { "header": { "content": { "mod": "pane" } } } }
 // Shows the program's icon (the app's program table), the agent's name or
 // the terminal's title, the folder, and the agent's status; an agent whose
-// own store this mod can read (pi, omp, opencode) also shows a prompt on the
-// right, up to half the header: the focused pane shows the prompt of the
-// section on screen (the newest sent prompt visible in the terminal, else the
-// last sent), other panes the last sent. Buttons split, zoom and close this
-// pane. Props: { pane, terminal }. Click: focus.
+// thread has a generated title shows it on the right, up to half the header,
+// with the last prompt in its tooltip. Until a title is ready the prompt takes
+// that place, for an agent whose own store this mod can read (pi, omp,
+// opencode, hermes): the focused pane shows the prompt of the section on
+// screen (the newest sent prompt visible in the terminal, else the last sent),
+// other panes the last sent. Buttons split, zoom and close this pane. Props:
+// { pane, terminal }. Click: focus.
 
 import { View, div, svg, image } from "gpui-kit";
-import { h_flex } from "gpui-base";
-import { panes, props, run, theme, home, exec, hc, terminals, spaces, shared, setShared, notify, readTextFile } from "herdr";
+import { h_flex, v_flex } from "gpui-base";
+import { panes, props, run, theme, home, exec, hc, terminals, spaces, shared, setShared, notify, readTextFile, layout } from "herdr";
 import { planFromPackage, managerFrom, commandFor, scriptArgs, findUrls, reasonFrom, shellIdle, localPage, isAddress } from "./live.js";
 
 // The live tests, one per folder: { terminal, url, name }. The + menu reads the same state,
@@ -20,6 +22,21 @@ const liveTests = () => {
   const all = shared(LIVE);
   return all && typeof all === "object" && !Array.isArray(all) ? all : {};
 };
+
+// The right column the tools live in; hidden, it leaves only the header's reopen button.
+function panelHidden() {
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return null;
+    if (node.id === "panel") return node;
+    for (const child of node.children ?? []) {
+      const found = walk(child);
+      if (found) return found;
+    }
+    return null;
+  };
+  return Boolean(walk(layout())?.hidden);
+}
+
 const baseName = (folder) => String(folder ?? "").replace(/[\\/]+$/, "").split(/[\\/]/).pop() || "repo";
 
 // pi keeps no map from a running process to its session file and the log is not held open, so
@@ -231,7 +248,10 @@ export default class Pane extends View {
     if (!p?.terminal || !p?.status) return;
     const seen = this.prompts[p.terminal];
     if (this.asking === p.terminal || (seen && Date.now() - seen.at < 10000)) return;
-    const read = p.app === "pi" ? piPrompt : SOURCES[p.app];
+    // The reported app is what `agents()` carries; a pane that does not repeat it still names
+    // its program, which is the same table key for every source here.
+    const app = p.app || p.program?.key || "";
+    const read = app === "pi" ? piPrompt : SOURCES[app];
     if (!read) return;
     this.asking = p.terminal;
     cx.spawn(async (cx) => {
@@ -421,11 +441,23 @@ export default class Pane extends View {
         : svg("mods/workspace-chrome/monitor.svg").size(14));
   }
 
+  // The tools moved into the right column, so closing it would take them away: a pane
+  // header keeps a way back.
+  reopenPanel(t) {
+    return div().id("ph-panels").p(3).flex_none().rounded(4).cursor_pointer()
+      .text_color(t.muted).tooltip("Show the Git / Changes / Files column").hover((s) => s.bg(t.hover).text_color(t.foreground))
+      .on_mouse_down("left", (_e, cx) => cx.stop_propagation())
+      .on_click((_e, cx) => { cx.stop_propagation(); run("layout.show", { id: "panel" }); })
+      .child(svg("mods/workspace-chrome/panel-right.svg").size(14));
+  }
+
   render(cx) {
     const t = theme();
     const p = this.me();
     if (!p) return div();
     const prompt = this.prompts[p.terminal]?.prompt ?? "";
+    const titles = shared("thread-titles");
+    const title = titles?.[p.terminal]?.title ?? "";
     const name = plain(((p.program?.agent || p.program?.shell) && p.program.name) || p.title || p.program?.name || "shell");
     const pic = icon(p.program, 14, t.dim);
     const st = p.status;
@@ -447,14 +479,21 @@ export default class Pane extends View {
       .child(div().flex_none().min_w(0).max_w("55%").truncate().text_color(t.muted).child(folder(p.cwd)))
       .when(Boolean(p.cwd), (el) => el.child(this.liveButton(t, p, cx)))
       .child(div().flex_1())
-      .when(Boolean(p.status) && Boolean(prompt) && prompt !== name, (el) => el.child(
-        h_flex().flex_none().min_w(0).max_w("52%").gap(5).items_center()
-          .tooltip(prompt)
-          .child(div().flex_none().text_size(12).text_color(t.accent).child("❯"))
-          .child(div().min_w(0).truncate().text_color(t.muted).child(prompt))))
+      // The title stays at the header's right end; the taller header gives its two lines
+      // room without moving it into the folder's half of the row.
+      .when(Boolean(p.status) && Boolean(title || prompt) && (title || prompt) !== name, (el) => el.child(
+        v_flex().flex_none().h_full().w(430).max_w("55%").gap(2).items_end().justify_end()
+          .tooltip(title ? (prompt ? `${title}\n\nAsked: ${prompt}` : title) : prompt)
+          .when(Boolean(title), (x) => x.child(div().w_full().truncate()
+            .text_size(12.5).line_height(1.1).font_medium().text_color(t.foreground).child(title)))
+          .when(Boolean(prompt) && prompt !== name && prompt !== title, (x) => x.child(
+            h_flex().w_full().min_w(0).gap(4).items_center()
+              .child(div().flex_none().text_size(11).text_color(t.accent).child("\u276f"))
+              .child(div().flex_1().min_w(0).truncate().text_size(11).line_height(1.1).text_color(t.muted).child(prompt))))))
       .when(st === "working", el => el.child(svg("mods/workspace-chrome/spinner.svg").size(12).flex_none().text_color(t.working).spin(900)))
       .when(st === "blocked", el => el.child(div().flex_none().px(6).h(18).flex().items_center().rounded(5).bg(t.blocked + "26").text_size(11.5).font_semibold().text_color(t.blocked).child("Needs you")))
       .when(st === "done", el => el.child(div().size(7).flex_none().rounded(4).bg(t.done)))
+      .when(panelHidden(), el => el.child(this.reopenPanel(t)))
       .when(this.hovered, el => el
         .child(this.button(t, `ph-r-${pane}`, "split-right", "pane.split", { direction: "right", pane }))
         .child(this.button(t, `ph-d-${pane}`, "split-down", "pane.split", { direction: "down", pane }))

@@ -3,7 +3,7 @@
 
 import { View, div } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { agents, panes, props, run, setShared, theme } from "herdr";
+import { agents, panes, props, run, setShared, shared, theme } from "herdr";
 
 // A space, an agent and a branch can name themselves, and a name can carry bidi overrides:
 // they never reach the tile, so a title cannot reorder what sits beside it.
@@ -18,13 +18,16 @@ export default class WallTile extends View {
     const pane = panes().find((p) => p.terminal === terminal);
     const status = agent.status ?? "idle";
     const color = status === "idle" ? t.muted : (t[status] ?? t.dim);
+    const titles = shared("thread-titles");
+    const title = titles?.[terminal]?.title ?? "";
     return h_flex().id(`wall-head-${terminal}`).size_full().gap(6).px(7).items_center().rounded(4)
       .bg(t.chrome).border(1).border_color(t.border)
       .hover((s) => s.bg(t.hover).border_color(t.input))
       .on_click(() => run("pane.focus", { terminal }))
       .child(div().size(7).flex_none().rounded(4).bg(color))
       .child(div().flex_none().max_w(140).truncate().text_size(12.5).font_medium().text_color(t.foreground).child(plain(agent.space_name)))
-      .child(div().flex_1().truncate().text_size(12).text_color(t.muted).child(plain(agent.program?.name ?? agent.app ?? "")))
+      .child(div().flex_1().truncate().text_size(12).text_color(title ? t.foreground : t.muted)
+        .child(plain(title || agent.program?.name || agent.app || "")))
       .when(Boolean(pane?.branch), (el) => el.child(div().flex_none().truncate().max_w(120).text_size(12).text_color(t.muted).child(plain(pane.branch))))
       // A tile is a block, not a pane: closing it is taking the agent out of the wall.
       .child(div().id(`wall-close-${terminal}`).h(18).px(5).flex_none().flex().items_center().justify_center().rounded(5)

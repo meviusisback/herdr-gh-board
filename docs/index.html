@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Repos &amp; Agents — a Herdr layout</title>
+<meta name="description" content="Every repo, branch, worktree and agent in one tree. One git panel. A wall of every running agent. A Herdr layout built from 17 mods.">
+<meta name="theme-color" content="#07080c">
+<meta property="og:title" content="Repos &amp; Agents — a Herdr layout">
+<meta property="og:description" content="Every repo, branch, worktree and agent in one tree. One git panel. A wall of every running agent.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236d5efc'/%3E%3Cpath d='M18 22h28M18 32h18M18 42h24' stroke='white' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>document.documentElement.classList.add("js");</script>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="Repos and Agents home">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </span>
+    <span>Repos <i>&amp;</i> Agents</span>
+  </a>
+  <nav class="nav-links" aria-label="Sections">
+    <a href="#features">Features</a>
+    <a href="#flow">How it works</a>
+    <a href="#wall">The wall</a>
+    <a href="#install">Install</a>
+  </nav>
+  <a class="nav-cta" href="https://github.com/meviusisback/herdr-gh-board" target="_blank" rel="noopener">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.48 2 2 6.58 2 12.25c0 4.53 2.87 8.37 6.84 9.73.5.1.68-.22.68-.49 0-.24-.01-.87-.01-1.71-2.78.62-3.37-1.37-3.37-1.37-.45-1.18-1.11-1.49-1.11-1.49-.91-.64.07-.62.07-.62 1 .07 1.53 1.06 1.53 1.06.9 1.57 2.34 1.12 2.91.86.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.71 0 0 .84-.28 2.75 1.05a9.3 9.3 0 0 1 5 0c1.91-1.33 2.75-1.05 2.75-1.05.55 1.41.2 2.45.1 2.71.64.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.8-4.57 5.05.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.6.69.49A10.03 10.03 0 0 0 22 12.25C22 6.58 17.52 2 12 2Z"/></svg>
+    GitHub
+  </a>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="aurora" aria-hidden="true">
+      <span class="orb orb-a"></span>
+      <span class="orb orb-b"></span>
+      <span class="orb orb-c"></span>
+      <span class="grid"></span>
+    </div>
+
+    <div class="hero-inner">
+      <p class="eyebrow reveal"><span class="pulse-dot"></span> A Herdr layout · 17 mods · no build step</p>
+      <h1 class="hero-title reveal">
+        <span class="line">Repos</span>
+        <span class="line line-amp"><i>&amp;</i> <span class="gradient">Agents</span></span>
+      </h1>
+      <p class="hero-lead reveal">
+        Your repos, their branches and worktrees, and the agents working in them —
+        as one tree you can read at a glance. One git panel beside it.
+        A wall that shows every running agent at once.
+      </p>
+      <div class="hero-actions reveal">
+        <a class="button primary" href="#install">Install the layout</a>
+        <a class="button ghost" href="https://github.com/meviusisback/herdr-gh-board" target="_blank" rel="noopener">Read the recipe</a>
+      </div>
+      <div class="stats reveal" aria-label="At a glance">
+        <div class="stat"><strong data-count="17">17</strong><span>mods</span></div>
+        <div class="stat"><strong data-count="1">1</strong><span>layout</span></div>
+        <div class="stat"><strong data-count="0">0</strong><span>dependencies</span></div>
+        <div class="stat"><strong data-count="4">4</strong><span>agent states</span></div>
+      </div>
+    </div>
+
+    <div class="hero-stage reveal" id="hero-stage">
+      <div class="device" id="device">
+        <div class="device-bar" aria-hidden="true">
+          <span class="dot red"></span><span class="dot amber"></span><span class="dot green"></span>
+          <span class="device-title">~/repo/orbital — Repos &amp; Agents</span>
+          <span class="device-chip">Herdr</span>
+        </div>
+        <img src="assets/hero.png" alt="The Repos &amp; Agents layout: a repo tree in the sidebar, an agent pane in the middle, and a git panel on the right" width="1200" height="655">
+        <div class="scanline" aria-hidden="true"></div>
+      </div>
+      <span class="float-chip chip-a" aria-hidden="true"><b>●</b> blocked → needs you</span>
+      <span class="float-chip chip-b" aria-hidden="true">thread title <b>“Fix login redirect”</b></span>
+      <span class="float-chip chip-c" aria-hidden="true">git <b class="plus">+12</b> <b class="minus">−3</b></span>
+      <span class="float-chip chip-d" aria-hidden="true"><b>2</b> working · <b>1</b> blocked</span>
+    </div>
+
+    <a class="scroll-hint" href="#features" aria-label="Scroll to features"><span></span>scroll</a>
+  </section>
+
+  <div class="ticker" aria-hidden="true">
+    <div class="ticker-track">
+      <span>repo tree</span><i>◆</i><span>thread titles</span><i>◆</i><span>worktrees</span><i>◆</i><span>commit graph</span><i>◆</i><span>issues &amp; PRs</span><i>◆</i><span>agent wall</span><i>◆</i><span>live tests</span><i>◆</i><span>multi-machine</span><i>◆</i>
+      <span>repo tree</span><i>◆</i><span>thread titles</span><i>◆</i><span>worktrees</span><i>◆</i><span>commit graph</span><i>◆</i><span>issues &amp; PRs</span><i>◆</i><span>agent wall</span><i>◆</i><span>live tests</span><i>◆</i><span>multi-machine</span><i>◆</i>
+    </div>
+  </div>
+
+  <section class="section" id="features">
+    <div class="section-head reveal">
+      <p class="kicker">The window</p>
+      <h2>One tree. <span class="gradient">Every thread.</span></h2>
+      <p class="section-lead">A sidebar that knows what each agent is doing, a panel that knows where the work stands, and a wall for when you need all of it at once.</p>
+    </div>
+
+    <div class="feature-grid">
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16M4 10h16M4 15h10M4 20h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18" cy="17.5" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Repo → branch → agent</h3>
+        <p>Every checkout under one folder, its distance from origin and main, its uncommitted work, and the agents living in it — folded into one readable tree.</p>
+        <div class="card-tags"><span>spaces-tree</span><span>git</span><span>worktrees</span></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h12a4 4 0 0 1 0 8H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="m12 19-4-4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <h3>Threads that name themselves</h3>
+        <p>Rows, pane headers and wall tiles show a short title written from the last prompts — so a thread reads “Fix login redirect”, not the first thing anyone typed.</p>
+        <div class="card-tags"><span>thread-titles</span><span>omp</span><span>pi</span><span>opencode</span></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3v18M6 7h7a4 4 0 0 1 0 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="17" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>One git panel</h3>
+        <p>Trees, Commits and Issues in one stack — every checkout, the commit graph of the shown repo, and the open issues and PRs of the picked repos with their conversations.</p>
+        <div class="card-tags"><span>gh-git</span><span>gh api</span><span>graphql</span></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>The wall</h3>
+        <p>One key turns the window into a grid of every running agent's live terminal, across spaces. Each tile says the space, the thread and the branch. Nothing moves.</p>
+        <div class="card-tags"><span>agent-wall</span><span>wall-tile</span><span>Ctrl+Shift+G</span></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M12 5v14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.4" opacity=".5"/></svg></div>
+        <h3>Git distance at a glance</h3>
+        <p>The status bar says how far the shown space is from origin and from main, what is not committed, and how many agents wait in each state. Working and blocked pulse.</p>
+        <div class="card-tags"><span>space-status</span><span>agents-status</span><span>chips</span></div>
+      </article>
+
+      <article class="card reveal">
+        <div class="card-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v6M12 15v6M3 12h6M15 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></div>
+        <h3>Actions where the work is</h3>
+        <p>Uncommitted changes open Commit. A branch ahead of main opens Merge. The status bar opens the worktree picker. A pane header starts its dev server and opens the page.</p>
+        <div class="card-tags"><span>space-git</span><span>worktree-gh</span><span>live tests</span></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section flow" id="flow">
+    <div class="flow-copy reveal">
+      <p class="kicker">How it works</p>
+      <h2>The tree is the <span class="gradient">map.</span></h2>
+      <p class="section-lead">Herdr gives every space, tab and terminal an address. The layout turns that world into a tree you can read, and keeps every colour tied to the state the agent itself reports.</p>
+      <ul class="check-list">
+        <li><span>01</span><div><b>Find the work.</b> A repo folds to its Main checkout, branches and worktrees; each row says its distance from origin and main.</div></li>
+        <li><span>02</span><div><b>Read the thread.</b> The agent's own store becomes a title, a prompt preview, a model and an effort.</div></li>
+        <li><span>03</span><div><b>Act in place.</b> Commit, merge, create a repo, start an agent on a branch, open the worktree — the row is the control.</div></li>
+        <li><span>04</span><div><b>See everything.</b> The wall composes the live terminals of the agents that are working or blocked, or every agent at once.</div></li>
+      </ul>
+    </div>
+
+    <div class="flow-art reveal" aria-label="A repo tree: orbital, ledger and atlas, each with branches and agents">
+      <svg class="tree-svg" viewBox="0 0 560 400" fill="none" role="img" aria-hidden="true">
+        <defs>
+          <linearGradient id="edge" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6d5efc"/><stop offset="1" stop-color="#56b6c2"/></linearGradient>
+        </defs>
+        <path class="edge draw" d="M280 68v16M100 84h360M100 84v12M280 84v12M460 84v12" stroke="url(#edge)" stroke-width="1.5"/>
+        <path class="edge draw" d="M108 152v24M108 206v6M108 238v30M108 298v6M288 152v24M288 206v62M468 152v24M468 206v62" stroke="url(#edge)" stroke-width="1.5"/>
+
+        <g class="node root" transform="translate(200 16)">
+          <rect width="160" height="52" rx="12" fill="#12151c" stroke="#2a3038"/>
+          <circle cx="22" cy="26" r="6" fill="#6d5efc"/>
+          <text x="38" y="24" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12">repos.root</text>
+          <text x="38" y="40" fill="#596170" font-family="ui-monospace, monospace" font-size="9">~/repo</text>
+        </g>
+
+        <g class="node repo" transform="translate(20 96)">
+          <rect width="160" height="56" rx="12" fill="#12151c" stroke="#3a2a28"/>
+          <rect x="14" y="14" width="16" height="16" rx="4" fill="#d97757"/>
+          <text x="40" y="26" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12" font-weight="600">orbital</text>
+          <text x="40" y="41" fill="#596170" font-family="ui-monospace, monospace" font-size="9">3 agents · 2 branches</text>
+          <circle cx="142" cy="21" r="4" fill="#6cabdd"/>
+        </g>
+        <g class="node repo" transform="translate(200 96)">
+          <rect width="160" height="56" rx="12" fill="#12151c" stroke="#22343a"/>
+          <rect x="14" y="14" width="16" height="16" rx="4" fill="#6cabdd"/>
+          <text x="40" y="26" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12" font-weight="600">ledger</text>
+          <text x="40" y="41" fill="#596170" font-family="ui-monospace, monospace" font-size="9">1 agent · 1 branch</text>
+          <circle cx="142" cy="21" r="4" fill="#8fbc6a"/>
+        </g>
+        <g class="node repo" transform="translate(380 96)">
+          <rect width="160" height="56" rx="12" fill="#12151c" stroke="#332c3a"/>
+          <rect x="14" y="14" width="16" height="16" rx="4" fill="#b48ead"/>
+          <text x="40" y="26" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="12" font-weight="600">atlas</text>
+          <text x="40" y="41" fill="#596170" font-family="ui-monospace, monospace" font-size="9">1 agent · Main</text>
+          <circle cx="142" cy="21" r="4" fill="#596170"/>
+        </g>
+
+        <g class="node branch" transform="translate(36 176)">
+          <rect width="144" height="30" rx="9" fill="#0f1218" stroke="#252b34"/>
+          <path d="M14 15h4M18 11v8" stroke="#8b95a5" stroke-width="1.2"/>
+          <text x="28" y="19" fill="#8b95a5" font-family="ui-monospace, monospace" font-size="10">Main</text>
+          <text x="132" y="19" fill="#596170" font-family="ui-monospace, monospace" font-size="9" text-anchor="end">2 ahead</text>
+        </g>
+        <g class="node agent" transform="translate(36 212)">
+          <rect width="144" height="48" rx="10" fill="#12151c" stroke="#3b2c26"/>
+          <rect x="12" y="12" width="14" height="14" rx="4" fill="#d97757"/>
+          <text x="34" y="23" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">Fix login redirect</text>
+          <text x="34" y="37" fill="#596170" font-family="ui-monospace, monospace" font-size="8.5">omp · working</text>
+        </g>
+        <g class="node branch" transform="translate(36 268)">
+          <rect width="144" height="30" rx="9" fill="#0f1218" stroke="#252b34"/>
+          <path d="M14 15h4M18 11v8" stroke="#8b95a5" stroke-width="1.2"/>
+          <text x="28" y="19" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="10">feat/login</text>
+          <text x="132" y="19" fill="#6cabdd" font-family="ui-monospace, monospace" font-size="9" text-anchor="end">↑2</text>
+        </g>
+        <g class="node agent" transform="translate(36 304)">
+          <rect width="144" height="48" rx="10" fill="#12151c" stroke="#3b2c26"/>
+          <rect x="12" y="12" width="14" height="14" rx="4" fill="#6cabdd"/>
+          <text x="34" y="23" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">Review auth flow</text>
+          <text x="34" y="37" fill="#596170" font-family="ui-monospace, monospace" font-size="8.5">pi · blocked</text>
+        </g>
+
+        <g class="node branch" transform="translate(216 176)">
+          <rect width="144" height="30" rx="9" fill="#0f1218" stroke="#252b34"/>
+          <path d="M14 15h4M18 11v8" stroke="#8b95a5" stroke-width="1.2"/>
+          <text x="28" y="19" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="10">export-csv</text>
+          <text x="132" y="19" fill="#596170" font-family="ui-monospace, monospace" font-size="9" text-anchor="end">+4</text>
+        </g>
+        <g class="node agent" transform="translate(216 212)">
+          <rect width="144" height="48" rx="10" fill="#12151c" stroke="#22343a"/>
+          <rect x="12" y="12" width="14" height="14" rx="4" fill="#8fbc6a"/>
+          <text x="34" y="23" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">Stream exports</text>
+          <text x="34" y="37" fill="#596170" font-family="ui-monospace, monospace" font-size="8.5">hermes · done</text>
+        </g>
+        <g class="node branch" transform="translate(216 268)">
+          <rect width="144" height="30" rx="9" fill="#0f1218" stroke="#252b34"/>
+          <path d="M14 15h4M18 11v8" stroke="#8b95a5" stroke-width="1.2"/>
+          <text x="28" y="19" fill="#8b95a5" font-family="ui-monospace, monospace" font-size="10">Main</text>
+          <text x="132" y="19" fill="#596170" font-family="ui-monospace, monospace" font-size="9" text-anchor="end">clean</text>
+        </g>
+
+        <g class="node branch" transform="translate(396 176)">
+          <rect width="144" height="30" rx="9" fill="#0f1218" stroke="#252b34"/>
+          <path d="M14 15h4M18 11v8" stroke="#8b95a5" stroke-width="1.2"/>
+          <text x="28" y="19" fill="#8b95a5" font-family="ui-monospace, monospace" font-size="10">Main</text>
+          <text x="132" y="19" fill="#596170" font-family="ui-monospace, monospace" font-size="9" text-anchor="end">clean</text>
+        </g>
+        <g class="node agent" transform="translate(396 212)">
+          <rect width="144" height="48" rx="10" fill="#12151c" stroke="#332c3a"/>
+          <rect x="12" y="12" width="14" height="14" rx="4" fill="#6d5efc"/>
+          <text x="34" y="23" fill="#e8ebf2" font-family="ui-monospace, monospace" font-size="9.5" font-weight="600">Map tiles cache</text>
+          <text x="34" y="37" fill="#596170" font-family="ui-monospace, monospace" font-size="8.5">omp · idle</text>
+        </g>
+      </svg>
+      <div class="art-badge">live from <b>agents()</b></div>
+    </div>
+  </section>
+
+  <section class="section wall-section" id="wall">
+    <div class="section-head reveal">
+      <p class="kicker">The wall</p>
+      <h2>Every agent, <span class="gradient">side by side.</span></h2>
+      <p class="section-lead">A layout of its own, written when you press the key or click a status chip. Each tile is the agent's live terminal, headed by its space, thread and branch.</p>
+    </div>
+    <figure class="wall-frame reveal">
+      <div class="wall-glow" aria-hidden="true"></div>
+      <img src="assets/wall.svg" alt="The wall: six live agent terminals in a grid, each headed by its space, thread title and branch" width="1200" height="700">
+      <figcaption><span>Ctrl+Shift+G</span> toggles the wall · picking a tab, agent or space leaves it for that pick</figcaption>
+    </figure>
+  </section>
+
+  <section class="section numbers">
+    <div class="number-card reveal"><strong data-count="17">17</strong><span>mods, one layout</span></div>
+    <div class="number-card reveal"><strong data-count="0">0</strong><span>build steps, dependencies</span></div>
+    <div class="number-card reveal"><strong data-count="15">15</strong><span>seconds between git scans</span></div>
+    <div class="number-card reveal"><strong data-count="8">8</strong><span>prompts per thread title</span></div>
+  </section>
+
+  <section class="section install" id="install">
+    <div class="install-copy reveal">
+      <p class="kicker">Install</p>
+      <h2>Clone, copy, <span class="gradient">switch.</span></h2>
+      <p class="section-lead">The layout and its mods are plain files in your Herdr home. No package manager, no build, nothing minified: what you read is what runs.</p>
+      <div class="reqs">
+        <span>Herdr 0.1.16+</span><span>git</span><span>gh</span><span>hc</span><span>sqlite3</span><span>Linux · macOS · Windows</span>
+      </div>
+      <a class="button ghost" href="https://github.com/meviusisback/herdr-gh-board/blob/main/RECIPE.md">Read RECIPE.md</a>
+    </div>
+
+    <div class="terminal reveal">
+      <div class="terminal-bar"><span></span><span></span><span></span><b>install.sh</b><button id="copy-install" type="button">copy</button></div>
+      <pre id="install-code"><code><span class="c-dim"># the layout and its 17 mods</span>
+<span class="c-blue">git</span> clone https://github.com/meviusisback/herdr-gh-board
+<span class="c-blue">cp</span> herdr-gh-board/layouts/repos-and-agents.json \
+   ~/.config/herdr-app/layouts/
+<span class="c-blue">cp</span> -r herdr-gh-board/mods/* ~/.config/herdr-app/mods/
+
+<span class="c-dim"># merge keys.json, then show the layout</span>
+<span class="c-blue">herdr-app</span> do layout.switch <span class="c-green">'{"name":"repos-and-agents"}'</span></code></pre>
+      <div class="terminal-foot"><span class="pulse-dot"></span> applies live · <code>herdr-app check mods/&lt;name&gt;</code> proves each mod</div>
+    </div>
+  </section>
+
+  <section class="closing">
+    <div class="closing-glow" aria-hidden="true"></div>
+    <p class="kicker reveal">Built for the way agents work</p>
+    <h2 class="reveal">Your window should know <span class="gradient">what is happening.</span></h2>
+    <div class="closing-actions reveal">
+      <a class="button primary" href="https://github.com/meviusisback/herdr-gh-board" target="_blank" rel="noopener">Get it on GitHub</a>
+      <a class="button ghost" href="https://herdr.dev" target="_blank" rel="noopener">What is Herdr?</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 12h10M4 17h13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span> Repos <i>&amp;</i> Agents</div>
+  <nav aria-label="Project links">
+    <a href="https://github.com/meviusisback/herdr-gh-board">GitHub</a>
+    <a href="https://github.com/meviusisback/herdr-gh-board/blob/main/README.md">README</a>
+    <a href="https://github.com/meviusisback/herdr-gh-board/blob/main/RECIPE.md">Recipe</a>
+    <a href="https://github.com/meviusisback/herdr-gh-board/blob/main/SECURITY.md">Security</a>
+    <a href="https://github.com/meviusisback/herdr-gh-board/blob/main/LICENSE">MIT license</a>
+  </nav>
+  <p>Made for <a href="https://herdr.dev" target="_blank" rel="noopener">Herdr</a>. Mods derived from Herdr's own are Apache-2.0 — see <a href="https://github.com/meviusisback/herdr-gh-board/blob/main/NOTICE">NOTICE</a>.</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

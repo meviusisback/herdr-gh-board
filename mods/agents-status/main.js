@@ -16,23 +16,19 @@ export default class AgentsStatus extends View {
   init(_props, _cx) {
     // Nothing to poll: the scan that feeds the git chips writes shared state, and a write
     // re-renders every mod — `git()` reads it here, when it is drawn.
-    this.turn = {}; // status -> how many times its chip was clicked, so a click moves on
   }
 
   statusChip(status, list, t) {
     const count = list.length;
     const color = status === "idle" ? t.muted : (t[status] ?? t.dim);
     const live = status === "working" || status === "blocked";
+    // Working and blocked agents open the active wall; done and idle open every agent's
+    // wall, so the two states a person sees are both one click from the wall.
+    const wall = live ? "agent-wall.active" : "agent-wall.all";
     return h_flex().id(`st-${status}`).h(22).px(8).gap(6).items_center().rounded(11).flex_none().cursor_pointer()
       .bg(alpha(color, "24")).border(1).border_color(alpha(color, "59"))
-      .tooltip(`${count} ${status}: ${list.map((a) => a.program?.name || a.tab_name || "terminal").join(", ")} — click to go to one`)
-      .on_click(() => {
-        // Its own list, in turn: the chip about blocked agents goes to an agent that is
-        // blocked, not to whatever `agent.next` happens to walk to.
-        const i = (this.turn[status] ?? 0) % list.length;
-        this.turn[status] = i + 1;
-        run("agent.focus", { terminal: list[i].address });
-      })
+      .tooltip(`${count} ${status}: ${list.map((a) => a.program?.name || a.tab_name || "terminal").join(", ")} — click to open the wall`)
+      .on_click(() => run(wall))
       .child(div().size(7).flex_none().rounded(4).bg(color).when(live, (el) => el.loop("opacity", { from: 0.45, to: 1, period: 1400 })))
       .child(div().text_size(12.5).font_semibold().text_color(color).child(`${count} ${status}`));
   }
@@ -75,8 +71,10 @@ export default class AgentsStatus extends View {
       .children(this.git(t))
       .child(div().w(1).h(16).flex_none().bg(t.border))
       .children(ORDER.filter((status) => counts[status]).map((status) => this.statusChip(status, by(status), t)))
-      .child(h_flex().h(22).px(8).items_center().rounded(11).flex_none().bg(alpha(t.muted, "14"))
-        .tooltip("every agent this window shows")
+      .child(h_flex().h(22).px(8).items_center().rounded(11).flex_none().cursor_pointer().bg(alpha(t.muted, "14"))
+        .tooltip("every agent this window shows — click to open the wall")
+        .hover((s) => s.bg(alpha(t.foreground, "18")))
+        .on_click(() => run("agent-wall.all"))
         .child(div().text_size(12.5).font_semibold().text_color(t.muted).child(`${list.length} total`)));
   }
 }

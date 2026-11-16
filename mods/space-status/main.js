@@ -1,6 +1,6 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex } from "gpui-base";
-import { spaces, agents, panes, theme, exec, focused, layout } from "herdr";
+import { spaces, agents, panes, theme, exec, focused, layout, openOverlay } from "herdr";
 
 // The bottom-left corner: the machine, and the repo the agents on screen are in. How many
 // agents run is the spaces panel's business now: every branch row there says what hangs under
@@ -111,7 +111,12 @@ export default class WorkspaceStatus extends View {
     if (roots.size !== 1) return null;
     const [root] = roots;
     const branches = new Set(list.map((entry) => entry.branch).filter(Boolean));
-    return { repo: root.slice(root.lastIndexOf("/") + 1), branch: branches.size === 1 ? [...branches][0] : null };
+    return {
+      repo: root.slice(root.lastIndexOf("/") + 1),
+      branch: branches.size === 1 ? [...branches][0] : null,
+      root,
+      machine: list[0]?.on ?? null,
+    };
   }
 
   render() {
@@ -123,9 +128,14 @@ export default class WorkspaceStatus extends View {
     const repo = this.repoChip(list);
     return h_flex().size_full().px(16).gap(20).items_center().bg(t.chrome).border_t(1).border_color(t.border).text_size(13).text_color(t.muted)
       .child(label(space?.machine ? "server" : "monitor", space?.machine ?? "This computer"))
-      .when(Boolean(repo), (el) => el
-        .tooltip(`${repo.repo}${repo.branch ? ` at ${repo.branch}` : ""} — the repo the agents on screen are in`)
-        .child(h_flex().gap(7).items_center()
+      .when(Boolean(repo), (el) => el.child(
+        h_flex().id("status-worktrees").gap(7).items_center().rounded(6).px(4).py(2).cursor_pointer()
+          .hover((s) => s.bg(t.hover))
+          .tooltip(`${repo.repo}${repo.branch ? ` at ${repo.branch}` : ""} — click for this repo's worktrees`)
+          .on_click(() => openOverlay({
+            mod: "worktree", kind: "popup", width: 420, height: 360,
+            props: { action: "open", folder: repo.root, machine: repo.machine },
+          }))
           .child(svg("mods/workspace-chrome/branch.svg").size(14))
           .child(div().text_color(t.foreground).child(repo.repo))
           .when(Boolean(repo.branch), (inner) => inner.child(div().text_color(t.muted).child(repo.branch)))))
