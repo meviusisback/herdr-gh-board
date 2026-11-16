@@ -12,7 +12,9 @@
 [![network](https://img.shields.io/badge/network-gh%20API%2C%20thread%20titles-d29922?style=flat-square)](#what-it-talks-to)
 [![license](https://img.shields.io/badge/license-MIT-3da639?style=flat-square)](LICENSE)
 
-<img src="preview.png?v=20261116" alt="Herdr with the Repos & Agents layout: the spaces tree on the left, the agent pane in the middle, the git panel on the right" width="100%">
+<img src="preview.png?v=20261116e" alt="Herdr with the Repos & Agents layout: the spaces tree on the left, the agent pane in the middle, the Changes panel on the right" width="100%">
+
+*Screenshots use demo repos and agents, not anyone's real work.*
 
 **Site:** https://meviusisback.github.io/herdr-gh-board/
 
@@ -94,8 +96,8 @@ ones every install already has.
   click it for that checkout's worktree picker. Bottom right: how far that space is from origin
   and from main, then every agent state with its count, as chips. Working and blocked chips open
   the active wall; idle, done and the total chip open every agent's wall.
-- **The wall**: `Ctrl+Shift+G` (or a status chip) turns the window into a grid of the running
-  agents' live terminals, across spaces, each tile headed by its state, space, thread title and
+- **The wall**: `Ctrl+Shift+G` (or a status chip) turns the window into a row of the running
+  agents' live terminals side by side across spaces, each tile headed by its state, space, thread title and
   branch. The wall's own status row carries the chip back to the tabs.
 
 ## How it behaves

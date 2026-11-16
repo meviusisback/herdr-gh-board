@@ -8,7 +8,7 @@ Commits, Issues); the bottom bar says what the agents on screen share and how fa
 origin; and a wall shows the running agents side by side without moving anything out of its
 space.
 
-![Repos & Agents](preview.png?v=20261116)
+![Repos & Agents](preview.png?v=20261116e)
 
 ## What you see
 
@@ -58,7 +58,7 @@ Left to right, on the theme's `canvas`, no title bar (macOS keeps the traffic li
   `agents-status` — the shown space's ahead/behind, uncommitted and `main+N` chips, then one
   chip per agent state with its count in `blocked, working, done, idle` order, then `N total`.
 - **The wall** (`agent-wall` + `wall-tile`): a layout of its own, `layouts/agent-wall.json`,
-  written when it is shown: a grid of the live terminals of the running agents, one tile per
+  written when it is shown: a row of the live terminals of the running agents, one tile per
   agent, each tile a terminal with a 26 px bar above it (state dot, space, thread title or
   program, branch, close). A chip in the wall's own status row says which agents the wall holds
   and flips between the two views, since the wall has no pane header.
